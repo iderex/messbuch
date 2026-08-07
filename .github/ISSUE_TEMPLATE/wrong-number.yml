@@ -1,0 +1,67 @@
+name: A number in the corpus is wrong
+description: Report a value, uncertainty, date or citation that does not match its source.
+title: "Wrong number: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        You do not have to be a contributor to file this, and you do not have to
+        be sure. A report that turns out to be a misreading costs somebody five
+        minutes; a wrong number nobody reported stays wrong.
+
+        Three things make a report actionable. There are no other required
+        fields, on purpose.
+
+  - type: input
+    id: record
+    attributes:
+      label: Which record
+      description: >-
+        The file path if you have it, for example
+        record/some-quantity/1987-someone-01.toml. If you do not, the quantity
+        and the paper is enough.
+      placeholder: record/<quantity>/<year>-<author>-<nn>.toml
+    validations:
+      required: true
+
+  - type: textarea
+    id: source-says
+    attributes:
+      label: What the source actually says
+      description: >-
+        The value, the uncertainty and the units as the paper prints them. Quote
+        it rather than converting it. If the paper gives no uncertainty, say
+        that; absent is a different fact from zero and the corpus stores them
+        differently.
+    validations:
+      required: true
+
+  - type: textarea
+    id: locator
+    attributes:
+      label: Where in the source it says it
+      description: >-
+        Page, table, equation or figure number, and the edition or version of
+        the source you read. This is what lets somebody check the report without
+        rereading the whole paper.
+    validations:
+      required: true
+
+  - type: markdown
+    attributes:
+      value: |
+        Anything else you want to add is welcome below, and none of it is
+        required.
+
+        What happens next is in `docs/corrections.md`. In short: the report is
+        checked against the source, and if it holds, the record keeps what it
+        said before alongside what it says now, so that somebody who already
+        cited the old value can see that it changed.
+
+  - type: textarea
+    id: anything-else
+    attributes:
+      label: Anything else
+    validations:
+      required: false
