@@ -76,6 +76,7 @@ way until the toolchain issue lands a lockfile.
 | Matching string | Workflow file | Why not |
 | --- | --- | --- |
 | `Scorecard analysis` | `.github/workflows/scorecard.yml` | No `pull_request` trigger, and the job is guarded to the default branch. It can never report on a pull request, so requiring it blocks every merge permanently. |
+| `zizmor` | `.github/workflows/zizmor.yml` | This is the code-scanning check run from the SARIF upload, not the job that fails on findings. It is absent on fork and Dependabot pull requests. Require `Audit workflows (zizmor)` instead. See the measurement below. |
 
 ## Proposed additions, as each lands
 
@@ -99,15 +100,52 @@ know to require.
 
 ## Reading the strings off a real run rather than off the YAML
 
-The table above derives each string from a workflow file. That is a claim about
-what the file says, not a measurement of what the platform named the check run.
-The measurement is one command against a pull request that has actually run
-them:
+A string derived from a workflow file is a claim about what the file says, not a
+measurement of what the platform named the check run. The measurement is one
+command against a pull request that has actually run them:
 
-    gh api repos/iderex/messbuch/commits/<head-sha>/check-runs --jq '[.check_runs[].name] | sort'
+    gh api repos/iderex/messbuch/commits/<head-sha>/check-runs \
+      --jq '[.check_runs[] | {name, app: .app.slug, conclusion}] | sort_by(.name)'
 
-Where that output disagrees with the table, the output is right and the table is
-a defect.
+Where that output disagrees with the table above, the output is right and the
+table is a defect.
+
+Run on the head of the pull request that added this document,
+`606ee3130247726b296556c6967de0777ea33f82`:
+
+    [{"app":"github-actions","conclusion":"success","name":"Audit workflows (zizmor)"},
+     {"app":"github-actions","conclusion":"success","name":"DCO sign-off"},
+     {"app":"github-actions","conclusion":"success","name":"Reject Trojan Source Unicode"},
+     {"app":"github-actions","conclusion":"success","name":"Reject Trojan Source Unicode"},
+     {"app":"github-actions","conclusion":"success","name":"dependency-review"},
+     {"app":"github-advanced-security","conclusion":"success","name":"zizmor"}]
+
+The four strings in the table above are confirmed by that output. It also shows
+two things the table did not predict, and both are the sort of thing that turns
+a required check into a deadlock.
+
+`Reject Trojan Source Unicode` appears twice, because
+`.github/workflows/unicode-guard.yml` triggers on both `push` to `"**"` and
+`pull_request` to `"**"`, and a pull request from a branch in this repository
+produces one run of each. Two check runs share one name. Anyone requiring that
+string should know that the protection is resolving a name that is not unique on
+the commit, and should not read a single green line in the pull request page as
+proof that both ran.
+
+`zizmor` is a second, different check run, produced by the
+`github-advanced-security` app rather than by Actions. It is the code-scanning
+result of the SARIF upload, not the job that gates on findings. Requiring
+`zizmor` instead of `Audit workflows (zizmor)` would look correct and would be
+wrong twice over: it gates on an upload rather than on a verdict, and the upload
+step in `.github/workflows/zizmor.yml` carries both a `continue-on-error: true`
+and an `if:` restricting it to pushes to `main` and to same-repository
+non-Dependabot pull requests. On a fork pull request or a Dependabot pull
+request that step does not run, so no such check run is created, so a required
+`zizmor` would block those merges permanently. The gating step, `Fail on
+actionable findings`, has no condition and runs everywhere.
+
+The name to require is `Audit workflows (zizmor)`. The name to leave alone is
+`zizmor`.
 
 ## What this document does not do
 
