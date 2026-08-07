@@ -23,6 +23,7 @@ here leaves the index wrong, and nothing in this repository refuses that.
 | 0009 | [Offline by default, and where the network surface lives](0009-offline-by-default.md) | 2026-08-07 |
 | 0011 | [How an analysis names the corpus it ran on](0011-corpus-versioning.md) | 2026-08-07 |
 | 0012 | [Where the history of a corrected value lives](0012-where-correction-history-lives.md) | 2026-08-07 |
+| 0013 | [Which pooling model is the default](0013-pooling-default.md) | 2026-08-07 |
 
 ## Numbers reserved and not yet used
 

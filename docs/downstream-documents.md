@@ -28,6 +28,7 @@ touched.
 | Which package may reach the network, or the name of the check that refuses the rest | `docs/decisions/0009-offline-by-default.md`, which fixes both, and `README.md` and `NOTICE.md` once the personal-data statements land under #58 |
 | A stamp field, the corpus version rule, or what a release is | `docs/decisions/0011-corpus-versioning.md` and `docs/decisions/0012-where-correction-history-lives.md`, which states the version consequence of a correction |
 | The shape of a `[[correction]]` entry or the `kind` set | `docs/decisions/0012-where-correction-history-lives.md`, `docs/corrections.md`, and the wording in `.github/ISSUE_TEMPLATE/wrong-number.yml` about what happens to a report |
+| Which pooling model an analysis runs by default, or which between-study variance estimator it uses | `docs/decisions/0013-pooling-default.md`, which fixes the default and requires the model, the estimator and the small-sample correction to be named in every output |
 | The seven parts of a decision record or the numbering rule | `docs/decisions/0001-how-decisions-are-recorded.md`, `docs/decisions/template.md`, and `docs/decisions/README.md`, which carries both the record table and the reserved-number table |
 | Adding, superseding or renumbering any decision record | `docs/decisions/README.md`. An index that does not list a record is wrong in the one place a reader goes to find records |
 
