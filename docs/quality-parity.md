@@ -151,8 +151,8 @@ does not find two issues the map never mentions and conclude the map is stale.
 
 Plainly, and this is the important section. Of the seventeen legs in the map,
 five are in place on this board and one needs nothing built at all. The other
-eleven name work this board still owes, and eight of the eleven cannot start
-until there is something here to build against.
+eleven name work this board still owes, and eight of the eleven were waiting on
+a source tree to build against, which now exists.
 
 In place today, all reporting on every pull request:
 
@@ -168,17 +168,31 @@ That is the sign off check, dependency review, the pull request hygiene check,
 the unicode guard and the workflow audit. `scorecard.yml` is not a gate leg and
 `docs/required-checks.md` says why it must never be required.
 
-Not in place, and not startable yet, because each reads a source tree or a
-dependency manifest and this repository has neither:
+Not in place as a check on a pull request, and no longer waiting on the source
+tree or the dependency manifest they read, because both now exist:
 
-    git ls-files | grep -E '\.go$|go\.mod|go\.sum'
-    (no output, exit 1)
+    git ls-files | grep -cE '\.go$|go\.mod|go\.sum'
+    11
 
 The locked restore, the build with warnings as errors, the test suite, the
 coverage bar, the formatter check, the static analysis, the greppable invariants
 lint and the format compatibility check are all in that state. The first of them
-to land is the toolchain pin and the single command, #14, and the rest wrap or
+to land was the toolchain pin and the single command, #14, and the rest wrap or
 read what it creates.
+
+Two of those eight now exist inside that command rather than merely being
+startable. The locked restore is its `modules` leg, which runs `go mod verify`
+against `go.sum` with `-mod=readonly` set, so a build cannot quietly rewrite the
+pins to make itself work. The build is its `build` leg. Warnings as errors is
+not part of either and is owed by #16 and #17, which decide the spelling.
+
+Nothing on a pull request runs that command yet, and that distinction is the
+whole subject of this section. Until #16 lands, a leg of the single command is
+something a contributor runs and not something this board refuses a change over.
+The command prints which of its own legs it did not run, and that output is the
+authority for the covered set rather than this document:
+
+    go run . ci
 
 Not in place, and blocked on something other than the source tree: the package
 build and the release inventory, which need a release to be published at all, and
@@ -186,11 +200,12 @@ which sit on the release milestone behind #56. That is ten of the eleven. The
 eleventh is the network integration harness, which is owed by #15 and is the one
 piece of parity work here that is deliberately never a gate leg.
 
-Two of the legs already in place report on a subject that does not exist yet, and
-that is not the same as reporting clean. `dependency-review` has no dependency
-manifest to review, which `docs/required-checks.md` already writes down. The
-pull request hygiene check reads the pull request rather than the tree, so it is
-the one leg here that is fully doing its job today.
+Two of the legs already in place reported on a subject that did not exist, and
+that is not the same as reporting clean. `dependency-review` was one of them,
+which `docs/required-checks.md` already writes down, and `go.mod` and `go.sum`
+now give it a manifest to review. The pull request hygiene check reads the pull
+request rather than the tree, so it is the leg here that has been fully doing
+its job throughout.
 
 Nothing on this board's protected branch is required yet:
 
