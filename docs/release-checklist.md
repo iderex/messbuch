@@ -119,20 +119,25 @@ walked is named as not walked rather than left out of the list.
 
 ### 9. The license is present
 
-Answerable now, and the answer is that it is absent.
+Answerable now, and the answer is that it is present.
 
     git ls-files | grep -iE '^LICEN[SC]E'
-    (no output, exit 1)
+    LICENSE
 
-This one blocks the release outright rather than degrading it. Nobody outside can
-use, fork or package anything here without it, and the sign-off check on every
-pull request already asks contributors to certify that they may submit their work
-under the project's license, so the certification currently points at nothing.
+AGPL-3.0, taken by the maintainer on 2026-08-08 as entry 1 of #13. Whether the
+file is tracked and what the platform reads it as are two questions, and the
+second is answered from the default branch rather than from a branch:
 
-It is not a task on this board. It is a decision only the maintainer can take,
-collected with the other four in #13, and the data license and the archived
-identifier questions there both also touch what a release publishes. Nothing on
-this list can be worked around while this item is open.
+    gh api repos/iderex/messbuch --jq '.license.spdx_id'
+
+This item blocked the release outright while it was open. Nobody outside could
+use, fork or package anything here, and the sign-off check on every pull request
+asked contributors to certify that they may submit their work under a license
+that did not exist. Both of those end with the file.
+
+The license on the corpus is a different question and is still open. It is entry
+2 of #13, and the archived identifier question there also touches what a release
+publishes, so this item being answered does not release the two below it.
 
 ### 10. The inventory is published
 
