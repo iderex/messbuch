@@ -26,7 +26,8 @@ touched.
 | The directory layout, the file naming rule or the tracked format under `record/` | `docs/decisions/0003-storage-format.md`, `docs/corrections.md`, and `record/_example/1900-example-01.toml`, which is the committed illustration of the layout |
 | Any uncertainty field name or the `uncertainty_status` value set | `docs/decisions/0005-uncertainty.md`, which writes out all seven cases in those field names, `docs/decisions/0004-record-schema.md`, which lists them as fields of a record, and `docs/corrections.md`, which describes absent against zero in them |
 | Any unit, conversion or normalization field name | `docs/decisions/0007-units.md`, which states the relationship between the published and the normalized value in those names, and `docs/decisions/0004-record-schema.md`, which lists them as fields of a record |
-| Any field name, required-or-optional decision, or closed value set in the record schema | `docs/decisions/0004-record-schema.md` first, then every record that writes a field name out: `docs/decisions/0005-uncertainty.md`, `docs/decisions/0007-units.md`, `docs/decisions/0008-provenance.md`, `docs/decisions/0012-where-correction-history-lives.md`, `docs/corrections.md`, and `record/_example/1900-example-01.toml` |
+| Any field name, required-or-optional decision, or closed value set in the record schema | `docs/decisions/0004-record-schema.md` first, then every record that writes a field name out: `docs/decisions/0005-uncertainty.md`, `docs/decisions/0007-units.md`, `docs/decisions/0008-provenance.md`, `docs/decisions/0012-where-correction-history-lives.md`, `docs/corrections.md`, `record/_example/1900-example-01.toml`, and `docs/curation.md`, which names a field wherever the judgement it teaches is about that field |
+| Which value a transcriber takes when a source gives several, how an unusual uncertainty is written, whether a conversion may be done by hand, what counts as a second reading, or how a group is chosen | `docs/curation.md`, which is followed literally by somebody transcribing measurements, so a rule that moves without it produces a batch of records that have to be redone rather than merely confusing a reader |
 | Dropping an analysis issue from a milestone | `docs/decisions/0004-record-schema.md`, which names per field the analysis that needs it, so a dropped analysis leaves a field with no reason |
 | The quantity identifier syntax, the shape of a vocabulary entry, or the `techniques` set of any quantity | `docs/decisions/0006-quantity-identity.md`, every file under `vocabulary/`, and `docs/decisions/0004-record-schema.md`, whose `measurement.quantity` and `method.technique` are coded against them |
 | A provenance field name, the `confirmation` value set, the `statement_kind` set, or which half of the resolvability check runs in the gate | `docs/decisions/0008-provenance.md` and `docs/decisions/0004-record-schema.md` |
@@ -53,7 +54,7 @@ command and the document move together.
 
 The machine readable schema. The field set itself now has a row, and the
 generated schema file that #23 owes will be downstream of both. The curation
-guide on #31 is downstream of the field set too and does not exist yet.
+guide is downstream of the field set too and now has its own row above.
 
 The `group/` registry now has a row, above, and it is a row about the shape
 rather than about the entries. `docs/decisions/0004-record-schema.md` still
