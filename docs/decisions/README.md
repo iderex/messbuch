@@ -29,6 +29,7 @@ here leaves the index wrong, and nothing in this repository refuses that.
 | 0011 | [How an analysis names the corpus it ran on](0011-corpus-versioning.md) | 2026-08-07 |
 | 0012 | [Where the history of a corrected value lives](0012-where-correction-history-lives.md) | 2026-08-07 |
 | 0013 | [Which pooling model is the default](0013-pooling-default.md) | 2026-08-07 |
+| 0014 | [The deviation statistic and the reference value it needs](0014-deviation-statistic.md) | 2026-08-08 |
 
 ## Numbers reserved and not yet used
 
@@ -83,8 +84,13 @@ shows those five because the issues that reserved them were open at the moment
 it ran. Run them again rather than reading these; the answer they are for is a
 number that moves.
 
-Correcting the filename in #45 belongs to #45 and is not done here; this section
-exists so that a reader of the index is not the last to know.
+The record is now written and it took `0014`, which is the number the rule above
+gives it. It is `0014-deviation-statistic.md`, and it is in the table at the top
+of this file. The filename in issue 45 is corrected to match, in the issue
+rather than here, so that the Done-when and the tree name one file between them.
+Read what the directory holds rather than this paragraph:
+
+    git ls-tree --name-only origin/main docs/decisions/
 
 What let it happen is that nothing reads either table, and the command above was
 not run before the number was allocated. Running it is the whole guard, and this
