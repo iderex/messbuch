@@ -53,6 +53,17 @@ hardest, because it is followed literally on a clean machine.
 The changelog. It is downstream of the corpus version rule and of the correction
 `kind` set.
 
+The measured shape of the deviation distribution. `README.md` opens by saying
+what the deviations between experiments turn out to look like and what that
+means for the plus-minus in the literature. Nothing in this repository has
+measured that. It is the finding the corpus is being assembled to test, and #46
+says in its own first line that the question is asked of the corpus rather than
+assumed, so the front page currently states an answer the project has not
+reached. When the analysis produces one, the paragraph is downstream of it in
+both directions: if the corpus agrees, the sentence gains the command that
+produced it, and if it does not, the sentence is wrong in the most public place
+this project has. The row is owed by #46 and #47, and either of them lands it.
+
 Adding a row is the cheap half. Noticing that one is owed is the expensive half,
 and that is what the question on the pull request template is for.
 
