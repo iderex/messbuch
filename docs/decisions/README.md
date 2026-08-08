@@ -28,9 +28,9 @@ here leaves the index wrong, and nothing in this repository refuses that.
 ## Numbers reserved and not yet used
 
 The gaps above are not deletions. Under the numbering rule an issue that names
-the filename of the record it owes has reserved that number by naming it. These
-five files do not exist in the tree today, and this table is a pointer to the
-issue that holds each one, not a claim that anything is written.
+the filename of the record it owes has reserved that number by naming it. The
+files listed below do not exist in the tree today, and this table is a pointer
+to the issue that holds each one, not a claim that anything is written.
 
 | Number | Slug named by the issue | Issue |
 | --- | --- | --- |
@@ -43,8 +43,47 @@ issue that holds each one, not a claim that anything is written.
 Reproduce that list rather than trusting it:
 
     gh issue list --repo iderex/messbuch --state open --limit 200 \
-      --json number,title,body \
-      --jq '.[] | "#\(.number) " + ([.body | scan("docs/decisions/[0-9]{4}-[a-z0-9-]+")] | join(" "))'
+      --json number,body \
+      --jq '.[] | select(.body | test("docs/decisions/[0-9]{4}-")) | "#\(.number) " + ([.body | scan("docs/decisions/[0-9]{4}-[a-z0-9-]+")] | unique | join(" "))'
+
+What that prints is wider than this table and has to be read rather than
+counted. An issue that merely depends on a record names its filename too, and
+the command cannot tell a dependency from a reservation. What it is good for is
+the opposite direction: a number appearing there that is neither in this table
+nor in the record table above is a reservation nobody wrote down.
+
+## A number that was reserved and then taken
+
+`0012` is in the record table above and is not in the reserved table, and both
+of those are correct today. It was reserved first and the reservation was
+missed.
+
+    $ gh issue view 45 --json number,createdAt --jq '"#\(.number) \(.createdAt)"'
+    #45 2026-08-07T19:33:55Z
+    $ gh issue view 45 --json body --jq .body | grep -n '0012'
+    24:Done when: docs/decisions/0012-deviation-statistic.md states the definition, the
+    $ git log --format='%H %ad' --date=iso-strict origin/main \
+        -- docs/decisions/0012-where-correction-history-lives.md
+    4fb51c5546775ba0aee82c82005790b0160a751a 2026-08-07T23:35:01+02:00
+
+So #45 held `0012` by naming it, and a different record was written onto that
+number afterwards. The rule decides the rest and leaves nothing to taste: a
+number never changes once the record is committed, so
+`0012-where-correction-history-lives.md` keeps `0012`, and the record #45 owes
+takes the next free number. The next free number is the one no row above claims:
+
+    $ gh issue list --repo iderex/messbuch --state open --limit 200 --json body \
+        --jq '[.[].body | scan("docs/decisions/([0-9]{4})-") | .[0]] | unique | join(" ")'
+    0002 0004 0005 0006 0008 0009 0010 0012
+    $ ls docs/decisions/ | grep -oE '^[0-9]{4}' | tr '\n' ' '
+    0001 0003 0005 0007 0009 0011 0012 0013
+
+`0014`. Correcting the filename in #45 belongs to #45 and is not done here; this
+section exists so that a reader of the index is not the last to know.
+
+What let it happen is that nothing reads either table, and the command above was
+not run before the number was allocated. Running it is the whole guard, and this
+paragraph is the only thing that says so.
 
 ## What is not decided here
 
