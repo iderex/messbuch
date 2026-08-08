@@ -30,6 +30,7 @@ here leaves the index wrong, and nothing in this repository refuses that.
 | 0012 | [Where the history of a corrected value lives](0012-where-correction-history-lives.md) | 2026-08-07 |
 | 0013 | [Which pooling model is the default](0013-pooling-default.md) | 2026-08-07 |
 | 0014 | [The deviation statistic and the reference value it needs](0014-deviation-statistic.md) | 2026-08-08 |
+| 0015 | [What counts as a tension, what counts as real, and what the probability is about](0015-what-counts-as-a-tension.md) | 2026-08-08 |
 
 ## Numbers reserved and not yet used
 
