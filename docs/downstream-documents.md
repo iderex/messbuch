@@ -23,8 +23,14 @@ touched.
 | The ruleset on the default branch | `docs/required-checks.md`, whose whole premise is what that ruleset currently requires |
 | The set of labels on the tracker | `.github/ISSUE_TEMPLATE/wrong-number.yml`, which names a label in its front matter; a renamed or deleted label makes the form apply one that does not exist |
 | The directory layout, the file naming rule or the tracked format under `record/` | `docs/decisions/0003-storage-format.md`, `docs/corrections.md`, and `record/_example/1900-example-01.toml`, which is the committed illustration of the layout |
-| Any uncertainty field name or the `uncertainty_status` value set | `docs/decisions/0005-uncertainty.md`, which writes out all seven cases in those field names, and `docs/corrections.md`, which describes absent against zero in them |
-| Any unit, conversion or normalization field name | `docs/decisions/0007-units.md`, which states the relationship between the published and the normalized value in those names |
+| Any uncertainty field name or the `uncertainty_status` value set | `docs/decisions/0005-uncertainty.md`, which writes out all seven cases in those field names, `docs/decisions/0004-record-schema.md`, which lists them as fields of a record, and `docs/corrections.md`, which describes absent against zero in them |
+| Any unit, conversion or normalization field name | `docs/decisions/0007-units.md`, which states the relationship between the published and the normalized value in those names, and `docs/decisions/0004-record-schema.md`, which lists them as fields of a record |
+| Any field name, required-or-optional decision, or closed value set in the record schema | `docs/decisions/0004-record-schema.md` first, then every record that writes a field name out: `docs/decisions/0005-uncertainty.md`, `docs/decisions/0007-units.md`, `docs/decisions/0008-provenance.md`, `docs/decisions/0012-where-correction-history-lives.md`, `docs/corrections.md`, and `record/_example/1900-example-01.toml` |
+| Dropping an analysis issue from a milestone | `docs/decisions/0004-record-schema.md`, which names per field the analysis that needs it, so a dropped analysis leaves a field with no reason |
+| The quantity identifier syntax, the shape of a vocabulary entry, or the `techniques` set of any quantity | `docs/decisions/0006-quantity-identity.md`, every file under `vocabulary/`, and `docs/decisions/0004-record-schema.md`, whose `measurement.quantity` and `method.technique` are coded against them |
+| A provenance field name, the `confirmation` value set, the `statement_kind` set, or which half of the resolvability check runs in the gate | `docs/decisions/0008-provenance.md` and `docs/decisions/0004-record-schema.md` |
+| The implementation language, the pinned toolchain version, or the path of the package permitted to reach the network | `docs/decisions/0002-language-and-toolchain.md`, and `docs/decisions/0009-offline-by-default.md`, which names that package and leaves its path to the language record |
+| The name of the harness that needs the outside world, or what the gate says about it | `docs/decisions/0010-headless-tests.md` and `docs/decisions/0002-language-and-toolchain.md`, which rests its plotting argument on the same rule |
 | Which package may reach the network, or the name of the check that refuses the rest | `docs/decisions/0009-offline-by-default.md`, which fixes both, and `README.md` and `NOTICE.md` once the personal-data statements land under #58 |
 | A stamp field, the corpus version rule, or what a release is | `docs/decisions/0011-corpus-versioning.md` and `docs/decisions/0012-where-correction-history-lives.md`, which states the version consequence of a correction |
 | The shape of a `[[correction]]` entry or the `kind` set | `docs/decisions/0012-where-correction-history-lives.md`, `docs/corrections.md`, and the wording in `.github/ISSUE_TEMPLATE/wrong-number.yml` about what happens to a report |
@@ -43,8 +49,13 @@ The build, the toolchain pin and the single local gate command. The contributing
 document will name that command and nothing else as the local gate, so the
 command and the document move together.
 
-The record schema and the machine readable schema. Every decision record above
-that names a field is downstream of the schema, and so is the curation guide.
+The machine readable schema. The field set itself now has a row, and the
+generated schema file that #23 owes will be downstream of both. The curation
+guide on #31 is downstream of the field set too and does not exist yet.
+
+The `group/` registry. `docs/decisions/0004-record-schema.md` requires
+`group.id` to resolve to an entry in it and no entry exists; the issue that
+lands the first ones carries the row.
 
 The command line surface. Its help output, the quickstart and the operator
 documentation are all downstream of it, and the quickstart is the one that fails
