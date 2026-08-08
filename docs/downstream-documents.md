@@ -32,6 +32,7 @@ touched.
 | Dropping an analysis issue from a milestone | `docs/decisions/0004-record-schema.md`, which names per field the analysis that needs it, so a dropped analysis leaves a field with no reason |
 | The quantity identifier syntax, the shape of a vocabulary entry, or the `techniques` set of any quantity | `docs/decisions/0006-quantity-identity.md`, every file under `vocabulary/`, and `docs/decisions/0004-record-schema.md`, whose `measurement.quantity` and `method.technique` are coded against them |
 | A provenance field name, the `confirmation` value set, the `statement_kind` set, or which half of the resolvability check runs in the gate | `docs/decisions/0008-provenance.md` and `docs/decisions/0004-record-schema.md` |
+| The legs of the single local gate command, or the command itself | `docs/quality-parity.md`, whose section on which legs are in place is a statement about what that command runs and about what a pull request runs, and the contributing document once it exists, which names that command and nothing else as the local gate |
 | The implementation language, the pinned toolchain version, or the path of the package permitted to reach the network | `docs/decisions/0002-language-and-toolchain.md`, and `docs/decisions/0009-offline-by-default.md`, which names that package and leaves its path to the language record |
 | The name of the harness that needs the outside world, or what the gate says about it | `docs/decisions/0010-headless-tests.md` and `docs/decisions/0002-language-and-toolchain.md`, which rests its plotting argument on the same rule |
 | Which package may reach the network, or the name of the check that refuses the rest | `docs/decisions/0009-offline-by-default.md`, which fixes both, and `README.md` and `NOTICE.md` once the personal-data statements land under #58 |
@@ -51,9 +52,10 @@ it is not a plan for what a finished project's map would look like. The parts
 below have no rows because they have no upstream to point at, and each becomes a
 row in the pull request that creates it.
 
-The build, the toolchain pin and the single local gate command. The contributing
-document will name that command and nothing else as the local gate, so the
-command and the document move together.
+The build, the toolchain pin and the single local gate command now have a row in
+the map above. Half of that row points at a document that does not exist: the
+contributing document names the command and nothing else as the local gate, and
+it is owed by #20.
 
 The machine readable schema. The field set itself now has a row, and the
 generated schema file that #23 owes will be downstream of both. The curation
