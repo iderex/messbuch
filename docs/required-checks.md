@@ -92,11 +92,21 @@ above with extra steps.
 | not yet fixed | #17 | Formatting and lint. |
 | not yet fixed | #18 | Static analysis of the source, reporting into the code scanning tab. The issue fixes the job name as `Analyze` extended with the language where the analysis distinguishes languages, so the exact string is not knowable until the language decision lands. |
 | not yet fixed | #21 | Pull request hygiene for this board. |
-| `No network outside the net package` | #10 | A package other than `net` reaching a network-capable API through the import graph. The string is fixed by `docs/decisions/0009-offline-by-default.md`. |
+| `No network outside the net package` | #65 | A package other than `net` reaching a network-capable API through the import graph. The string is fixed by `docs/decisions/0009-offline-by-default.md` rather than by the issue, which is why this row carries a string while the three above it do not. |
 
 When one of these lands, the pull request that lands it fills in its row here.
 A check that exists and is not in this table is a check the maintainer will not
 know to require.
+
+A row in this table naming a closed issue is the same defect as a check that is
+missing from it, and it is harder to see. This one carried #10 until #65 was
+opened. #10 asked the decision record to name the check, the record named it,
+and #10 closed as completed, so the column read as an owner where there was
+none and the check was owed by nobody. Read the column as a claim to be checked
+rather than as a fact:
+
+    gh issue list --repo iderex/messbuch --state open --limit 200 \
+      --json number --jq '[.[].number] | sort | join(" ")'
 
 ## Reading the strings off a real run rather than off the YAML
 
