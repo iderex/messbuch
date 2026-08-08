@@ -56,7 +56,8 @@ assumed.
 
 ## Proposed set, from what exists today
 
-These four already report on pull requests in this repository.
+These already report on pull requests in this repository. The count is not
+stated, because a count in a sentence drifts against the table under it.
 
 | Matching string | Workflow file | What it refuses | Reports on every pull request |
 | --- | --- | --- | --- |
@@ -64,6 +65,19 @@ These four already report on pull requests in this repository.
 | `dependency-review` | `.github/workflows/dependency-review.yml` | A newly introduced or upgraded dependency carrying a known advisory at severity low or above. | Yes. Triggered on `pull_request` with no filter. The job declares no `name:`, so the check run takes the job id. |
 | `Reject Trojan Source Unicode` | `.github/workflows/unicode-guard.yml` | Bidirectional and invisible Unicode control characters in tracked text, the Trojan Source class. Fails closed on a scanner error rather than reading it as a clean tree. | Yes. Triggered on `pull_request` against `"**"`, no path filter. |
 | `Audit workflows (zizmor)` | `.github/workflows/zizmor.yml` | Any actionable zizmor finding at low severity or above in the workflow files, and a workflow that fails to parse. | Yes. Triggered on `pull_request` against `"**"`. The job's only conditional is on the SARIF upload step, not on the gating step and not on the job. |
+| `Deterministic PR-hygiene checks` | `.github/workflows/pr-hygiene.yml` | A pull request body naming no issue, and a commit message carrying a byte outside printable ASCII plus line feed and horizontal tab. Fails closed if the commit range cannot be walked, and refuses before reading the pull request at all if its own fixtures do not behave as it claims. | Yes. Triggered on `pull_request` with types `opened`, `synchronize`, `reopened` and `edited`, and no branch or path filter. |
+
+`Deterministic PR-hygiene checks` has a property anyone requiring it needs to
+know, and it is deliberate rather than a defect. It refuses only where the head
+branch lives in this repository. A pull request from a fork gets every finding
+as an annotation and the check still reports green, so requiring it does not
+block an outside contribution and does not block on one. A run that did not
+apply the refusing tier prints that it did not, so a green line on a fork pull
+request is not the same statement as a green line on a branch from here. The
+argument for the split is in the issue that built it, #21.
+
+The diff-size finding in that check is a warning and can never red it. A bulk
+transcription of a measurement series legitimately runs long.
 
 `dependency-review` has a property worth writing down before it is discovered.
 There is no dependency manifest in this repository today, so it reports without
@@ -91,7 +105,6 @@ above with extra steps.
 | `Validate the corpus` | #24 | A record file that is not a well formed record: a parse failure, an unknown field, a missing required field, a wrong type, a value outside a closed set, a duplicate identifier, or a file in the wrong place for what it claims to be. |
 | not yet fixed | #17 | Formatting and lint. |
 | not yet fixed | #18 | Static analysis of the source, reporting into the code scanning tab. The issue fixes the job name as `Analyze` extended with the language where the analysis distinguishes languages, so the exact string is not knowable until the language decision lands. |
-| not yet fixed | #21 | Pull request hygiene for this board. |
 | `No network outside the net package` | #65 | A package other than `net` reaching a network-capable API through the import graph. The string is fixed by `docs/decisions/0009-offline-by-default.md` rather than by the issue, which is why this row carries a string while the three above it do not. |
 
 When one of these lands, the pull request that lands it fills in its row here.
@@ -130,9 +143,28 @@ Run on the head of the pull request that added this document,
      {"app":"github-actions","conclusion":"success","name":"dependency-review"},
      {"app":"github-advanced-security","conclusion":"success","name":"zizmor"}]
 
-The four strings in the table above are confirmed by that output. It also shows
-two things the table did not predict, and both are the sort of thing that turns
-a required check into a deadlock.
+That run predates `Deterministic PR-hygiene checks`, so it confirms the strings
+that existed on that commit and says nothing about the one added since.
+`Deterministic PR-hygiene checks` is confirmed by the same command run against
+`c36a5e5c5ef3e280e9ef5b55cbb1436c94868ef1`, a commit on the pull request that
+added it:
+
+    [{"app":"github-actions","conclusion":"success","name":"Audit workflows (zizmor)"},
+     {"app":"github-actions","conclusion":"success","name":"DCO sign-off"},
+     {"app":"github-actions","conclusion":"success","name":"Deterministic PR-hygiene checks"},
+     {"app":"github-actions","conclusion":"success","name":"Reject Trojan Source Unicode"},
+     {"app":"github-actions","conclusion":"success","name":"Reject Trojan Source Unicode"},
+     {"app":"github-actions","conclusion":"success","name":"dependency-review"},
+     {"app":"github-advanced-security","conclusion":"success","name":"zizmor"}]
+
+The commit named there is not the head that merged, because the output has to
+exist before the sentence quoting it can be written. Naming the commit the
+command was actually run against is the point; running it against an older
+commit and reading the result as a statement about the table as it stands today
+would be the defect this section exists to prevent.
+
+The older output also shows two things the table did not predict, and both are
+the sort of thing that turns a required check into a deadlock.
 
 `Reject Trojan Source Unicode` appears twice, because
 `.github/workflows/unicode-guard.yml` triggers on both `push` to `"**"` and
