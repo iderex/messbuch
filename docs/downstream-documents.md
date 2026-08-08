@@ -19,7 +19,8 @@ touched.
 
 | If you change this | These go wrong |
 | --- | --- |
-| A job `name:` or a trigger in `.github/workflows/` | `docs/required-checks.md`, which names each check by the exact string the branch protection matches and states whether it reports on every pull request |
+| A job `name:` or a trigger in `.github/workflows/` | `docs/required-checks.md`, which names each check by the exact string the branch protection matches and states whether it reports on every pull request, and `docs/quality-parity.md`, whose section on which legs are in place is a statement about this workflow set |
+| Which issue lands a check, or a check landing and closing its issue | `docs/required-checks.md`, whose `Built by issue` column is the same claim, and `docs/quality-parity.md`, which names the issue behind every adopted and adapted leg and goes stale the same way |
 | The ruleset on the default branch | `docs/required-checks.md`, whose whole premise is what that ruleset currently requires |
 | The set of labels on the tracker | `.github/ISSUE_TEMPLATE/wrong-number.yml`, which names a label in its front matter; a renamed or deleted label makes the form apply one that does not exist |
 | The directory layout, the file naming rule or the tracked format under `record/` | `docs/decisions/0003-storage-format.md`, `docs/corrections.md`, and `record/_example/1900-example-01.toml`, which is the committed illustration of the layout |
