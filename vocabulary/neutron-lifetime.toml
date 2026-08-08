@@ -1,0 +1,81 @@
+# Vocabulary entry. The shape of this file is fixed by
+# docs/decisions/0006-quantity-identity.md and it is the worked example that
+# record was checked against.
+#
+# This is not a measurement record and it holds no measured value. It is this
+# project's own statement of what a name means. Records for this quantity live
+# under record/neutron-lifetime/ and there are none yet.
+
+id = "neutron-lifetime"
+name = "Neutron lifetime"
+dimension = "time"
+canonical_unit = "s"
+status = "active"
+
+definition = """
+The mean lifetime of the free neutron: the time constant of the exponential
+decay of a population of neutrons that are free, that is not bound in a
+nucleus, and at rest in the frame the value is quoted in. It is the reciprocal
+of the total decay rate of the free neutron, so it is a property of the neutron
+and not of any apparatus used to measure it. No technique, no confinement
+method and no beam geometry is part of this definition.
+"""
+
+# Boundary cases that are this quantity. Each was decided rather than assumed,
+# and the list grows by one entry every time a case is argued.
+includes = [
+  "A value measured by counting the decay products emerging from a beam of neutrons of known density.",
+  "A value measured by confining neutrons and counting how many survive after a known interval, whether the confinement is material, magnetic or gravitational.",
+  "A value published as a half-life, which is the same quantity under another convention and converts by the exactly defined factor 1 / ln 2 under docs/decisions/0007-units.md.",
+  "A value the source produced by combining its own measurement with others, which enters carrying statement_kind = \"combined-fit\" under docs/decisions/0008-provenance.md and is never pooled as an independent measurement.",
+]
+
+# Boundary cases that are not this quantity. Each says what it is instead,
+# because an exclusion that only says no leaves a contributor with a number and
+# nowhere to put it.
+excludes = [
+  "The lifetime of a neutron bound in a nucleus. A bound neutron does not decay with this time constant and the number is a property of that nuclide, not of the free neutron.",
+  "The decay constant of the free neutron. It is the reciprocal of this quantity and carries the reciprocal dimension, so it is a separate identifier rather than an alias, per the dimension boundary in docs/decisions/0006-quantity-identity.md.",
+  "A lifetime inferred from other measured quantities through a theoretical relation rather than measured. That is a prediction, this corpus holds published measurements, and it has no home here today.",
+]
+
+aliases = [
+  "free neutron lifetime",
+  "neutron mean lifetime",
+  "mean lifetime of the free neutron",
+  "tau_n",
+]
+
+# The codebook the method field of a record is coded against. No catch-all
+# value: a technique this set does not have arrives as an addition to this file
+# in the same pull request as the record that needs it. No `family` is written
+# on any entry, because no cross-quantity technique family has been argued for
+# these three and inventing one here would be a taxonomy nobody asked for.
+[[techniques]]
+id = "beam"
+name = "Beam"
+definition = "The decay products emerging from a beam of neutrons of known density are counted, and the lifetime follows from the counted rate and the density."
+
+[[techniques]]
+id = "material-bottle"
+name = "Material bottle"
+definition = "Neutrons are confined by material walls and the survivors are counted after a known interval."
+
+[[techniques]]
+id = "magnetic-trap"
+name = "Magnetic trap"
+definition = "Neutrons are confined by a magnetic field, alone or together with gravity, and the survivors are counted after a known interval."
+
+# One regime. The definition above has never changed, so the initial regime
+# omits `from` rather than carrying an invented start date. Redefinitions of the
+# second are unit redefinitions and are handled by docs/decisions/0007-units.md,
+# not by this field.
+[[definition_epochs]]
+id = "free-neutron-mean-lifetime"
+note = "The definition of this quantity has not changed. This entry exists so that the regime is written rather than implied by the absence of the field."
+
+# Empty because no external identifier has been recorded, not because none
+# exists. Nothing on the route that produced this entry verified an identifier
+# in any external scheme, and writing an unverified one here would put a
+# fabricated cross-reference in the file whose job is to say what a name means.
+external = []
