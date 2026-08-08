@@ -37,6 +37,7 @@ touched.
 | Which pooling model an analysis runs by default, or which between-study variance estimator it uses | `docs/decisions/0013-pooling-default.md`, which fixes the default and requires the model, the estimator and the small-sample correction to be named in every output |
 | The seven parts of a decision record or the numbering rule | `docs/decisions/0001-how-decisions-are-recorded.md`, `docs/decisions/template.md`, and `docs/decisions/README.md`, which carries both the record table and the reserved-number table |
 | Adding, superseding or renumbering any decision record | `docs/decisions/README.md`. An index that does not list a record is wrong in the one place a reader goes to find records |
+| The shape of a `group/` entry, the rule for choosing which group a measurement belongs to, or what a group entry may not carry | `group/README.md`, which is where all three are written, and `docs/decisions/0004-record-schema.md`, whose `group.id` fixes the path an entry lives at and the identifier syntax it takes. Every existing entry under `group/` goes wrong too, since a shape change is a change to files already written against the old one |
 
 ## Rows that are owed and are not here yet
 
@@ -53,9 +54,12 @@ The machine readable schema. The field set itself now has a row, and the
 generated schema file that #23 owes will be downstream of both. The curation
 guide on #31 is downstream of the field set too and does not exist yet.
 
-The `group/` registry. `docs/decisions/0004-record-schema.md` requires
-`group.id` to resolve to an entry in it and no entry exists; the issue that
-lands the first ones carries the row.
+The `group/` registry now has a row, above, and it is a row about the shape
+rather than about the entries. `docs/decisions/0004-record-schema.md` still
+requires `group.id` to resolve to an entry and there is still no entry, because
+no record in the corpus names a group. The pull request that files the first
+record carrying a `group.id` lands the entry it resolves to, and
+`group/README.md` is where that obligation is written.
 
 The command line surface. Its help output, the quickstart and the operator
 documentation are all downstream of it, and the quickstart is the one that fails
