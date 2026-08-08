@@ -63,7 +63,16 @@ a defect.
 Version control keeps the full history as it always does. Nothing about this
 decision changes that, and nothing about the guarantee rests on it.
 
-Shape of an entry, in the tracked TOML format:
+Shape of an entry, in the tracked TOML format. Nothing in the block below is
+transcribed. The two numbers are invented to show that `was` and `now` hold
+values of the same kind in the same unit, the issue reference is a placeholder,
+and `field` is written in the field names this record proposes rather than in
+names anything has fixed, because the record schema is decided in its own record
+and has not landed. Do not cite the numbers and do not read the field path as
+settled. The same statement is on the seven blocks in
+`docs/decisions/0005-uncertainty.md` and on `record/_example/1900-example-01.toml`
+for the same reason, which is that a number that looks transcribed and is not is
+the one defect this corpus cannot afford to model.
 
 ```toml
 [[correction]]
