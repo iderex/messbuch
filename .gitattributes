@@ -1,0 +1,20 @@
+# Every tracked text file is stored with LF and checked out with LF, on every
+# platform and whatever a clone's own core.autocrlf says.
+#
+# Without this line the line ending of a working copy is a property of each
+# contributor's git configuration rather than of this repository. Measured on a
+# Windows clone with core.autocrlf=true, before this file existed: a fresh
+# checkout of the branch that added the build entry point produced CRLF in
+# every Go file, and
+#
+#     gofmt -l .
+#
+# listed all nine of them. The formatting leg of the gate would then be red on a
+# clean clone for a reason that is in nobody's diff, which is the specific
+# failure the build entry point is supposed to make impossible.
+#
+# The corpus is the other half. A record is a transcription of a published
+# number, and byte-for-byte reproducibility of anything built from it cannot be
+# a property of the operating system somebody cloned on. The hazard was named on
+# the reproducibility issue as untested; this removes it rather than tests it.
+* text=auto eol=lf
