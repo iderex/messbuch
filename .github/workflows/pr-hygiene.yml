@@ -1,0 +1,259 @@
+# Pull request hygiene (#21). A check that reasons about the pull request rather
+# than about the code, which is a class nothing else in this gate covers: the
+# other workflows read tracked files, dependency manifests, commit trailers and
+# the workflow files themselves, and none of them reads a pull request body or a
+# commit message body.
+#
+# Two things are refused, both at high confidence. A pull request body with no
+# issue reference, so that every change has a stated reason somewhere other than
+# the diff. And a commit message carrying a character outside an explicit table,
+# because the Unicode guard in this repository reads tracked files and never
+# reads commit messages, and a commit message cannot be corrected after it lands
+# except by rewriting history.
+#
+# One thing is only warned about: a large diff. A bulk transcription of a
+# measurement series legitimately runs long, and refusing it would teach people
+# to split work in ways that make review harder rather than easier.
+#
+# The refusing tier applies to work whose head branch lives in this repository.
+# Somebody arriving from a fork cannot know an issue number before the issue
+# exists, and failing their first contribution on a local convention is
+# gatekeeping rather than a caught mistake. Their pull request still gets every
+# annotation, so nothing is lost; the obligation moves to whoever handles the
+# contribution. A run that did not apply the refusing tier says so rather than
+# going quiet.
+#
+# The proof and the check are one step on purpose. Two steps would need two
+# copies of the matchers, and the fixtures would then prove a copy that is not
+# the one deciding the pull request.
+name: PR hygiene
+
+on:
+  # `edited` is in the list because the body is one of the two subjects. Without
+  # it, a body that gains its issue reference after the check ran red stays red,
+  # and a body that loses one after the check ran green stays green.
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+
+# Read-only: the check reads the event payload and the commit range, and writes
+# nothing anywhere.
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-hygiene-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  hygiene:
+    # The literal check-run name a branch protection would match. Fixed here and
+    # recorded in docs/required-checks.md; renaming it empties a required set
+    # without reporting anything.
+    name: Deterministic PR-hygiene checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # Full history so the base..head range is walkable. No step pushes, so
+          # do not persist the token in .git/config.
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Prove the matchers bite, then check the pull request
+        env:
+          # Everything attacker-influenced arrives as an environment variable and
+          # is never interpolated into the script, so a crafted body or branch
+          # name can never be evaluated as shell.
+          PR_BODY: ${{ github.event.pull_request.body }}
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          THIS_REPO: ${{ github.repository }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+
+          # ---------------------------------------------------------------
+          # The matchers. Defined once, proved below, then used on the real
+          # pull request further down.
+          # ---------------------------------------------------------------
+
+          body_names_an_issue() {
+            printf '%s' "$1" | grep -Eq '(^|[^0-9A-Za-z_])#[0-9]+([^0-9]|$)|https://github\.com/[^/ ]+/[^/ ]+/issues/[0-9]+'
+          }
+
+          # The table: printable ASCII, plus line feed as the line separator,
+          # plus horizontal tab, which is permitted because commit messages in
+          # this repository paste command output. An allowlist rather than a
+          # list of forbidden characters, because that is the only shape that
+          # also refuses a script nobody has thought of yet.
+          #
+          # Deleting the table and counting what is left, rather than matching
+          # the complement with a regular expression. The regular expression
+          # form was written first and one fixture caught it out. On the grep
+          # this was developed against, the carriage return fixture below
+          # passed the regular expression form and is refused by this one,
+          # because a grep that treats its input as lines can drop a carriage
+          # return sitting before a line feed, and a carriage return is one of
+          # the bytes this table exists to refuse. Whether the runner's grep
+          # shares that behaviour was not measured and does not need to be:
+          # byte deletion has no line semantics to be wrong about anywhere.
+          # The fixture is what holds the property either way.
+          message_is_in_the_table() {
+            [ "$(printf '%s' "$1" | LC_ALL=C tr -d '\011\012\040-\176' | wc -c)" -eq 0 ]
+          }
+
+          # Work from inside this repository is work whose head branch lives in
+          # this repository. Anything else is outside, including a head repo the
+          # event payload did not name, which is annotated rather than refused.
+          tier_for_head_repo() {
+            if [ -n "$1" ] && [ "$1" = "$2" ]; then printf 'refuse'; else printf 'annotate'; fi
+          }
+
+          # ---------------------------------------------------------------
+          # The proof. It runs before the pull request is read, on every
+          # invocation. A matcher that stopped refusing what it names would
+          # otherwise pass every pull request silently, and a check nobody has
+          # seen fail is a check nobody knows works.
+          #
+          # Every fixture whose point is a specific byte is built with printf
+          # and octal escapes rather than written as a literal, because a
+          # literal would be normalised on the way into git and the byte the
+          # fixture exists to prove would be gone.
+          # ---------------------------------------------------------------
+
+          fail=0
+          ok()      { if "$@"; then :; else echo "self-test FAILED, expected to pass: $*"; fail=1; fi; }
+          refused() { if "$@"; then echo "self-test FAILED, expected a refusal: $*"; fail=1; fi; }
+          same()    { if [ "$2" = "$3" ]; then :; else echo "self-test FAILED: $1 gave '$2', wanted '$3'"; fail=1; fi; }
+
+          echo "Proving the issue-reference matcher."
+          ok      body_names_an_issue 'Closes #21'
+          ok      body_names_an_issue 'the reason is in #21, read it'
+          ok      body_names_an_issue '#21'
+          ok      body_names_an_issue 'see https://github.com/iderex/messbuch/issues/21'
+          # Near misses, each one character away from passing.
+          refused body_names_an_issue 'no reference anywhere in this body'
+          refused body_names_an_issue 'a bare # sign and nothing after it'
+          refused body_names_an_issue 'issue 21 without the hash'
+          refused body_names_an_issue '#twentyone'
+          refused body_names_an_issue ''
+
+          echo "Proving the commit-message character table."
+          ok      message_is_in_the_table "$(printf 'Add the thing\n\nA body line.\n')"
+          ok      message_is_in_the_table "$(printf 'Paste output\n\n\tfoo\tbar\n')"
+          ok      message_is_in_the_table "$(printf 'Quote \047 backtick \140 backslash \134 tilde \176 dollar \044\n')"
+          # Near misses. Each is one character outside the table and nothing else.
+          refused message_is_in_the_table "$(printf 'Fix the caf\303\251 thing\n')"
+          refused message_is_in_the_table "$(printf 'An em dash \342\200\224 here\n')"
+          refused message_is_in_the_table "$(printf 'A zero width space \342\200\213 here\n')"
+          refused message_is_in_the_table "$(printf 'A right-to-left override \342\200\256 here\n')"
+          refused message_is_in_the_table "$(printf 'Carriage return\r\nin the message\n')"
+          refused message_is_in_the_table "$(printf 'A vertical tab \013 here\n')"
+
+          echo "Proving the tier decision, including the outside case."
+          same "head branch in this repository" \
+            "$(tier_for_head_repo 'iderex/messbuch' 'iderex/messbuch')" 'refuse'
+          same "head branch in a fork" \
+            "$(tier_for_head_repo 'somebody-else/messbuch' 'iderex/messbuch')" 'annotate'
+          same "head repo absent from the payload" \
+            "$(tier_for_head_repo '' 'iderex/messbuch')" 'annotate'
+
+          echo "Simulating an outside contribution end to end."
+          echo "SIMULATION, NOT A LIVE RUN. This repository cannot open a fork pull"
+          echo "request against itself, so the outside path is exercised here against"
+          echo "a fixture rather than by a real contribution."
+          sim_tier="$(tier_for_head_repo 'somebody-else/messbuch' 'iderex/messbuch')"
+          sim_body='no issue reference in this simulated body'
+          if body_names_an_issue "$sim_body"; then
+            echo "self-test FAILED: the simulated outside body should not have matched"
+            fail=1
+          elif [ "$sim_tier" = "annotate" ]; then
+            echo "::warning::Simulated outside contribution: the body names no issue. Annotated, not refused."
+            echo "The simulated outside contribution was annotated and not refused."
+          else
+            echo "self-test FAILED: the simulated outside contribution was refused"
+            fail=1
+          fi
+
+          if [ "$fail" -ne 0 ]; then
+            echo "::error::The hygiene matchers did not behave as this check claims. Refusing before reading the pull request, because a check whose matchers are wrong is worse than no check."
+            exit 1
+          fi
+          echo "All matcher and tier fixtures behaved as claimed."
+          echo
+
+          # ---------------------------------------------------------------
+          # The pull request itself.
+          # ---------------------------------------------------------------
+
+          tier="$(tier_for_head_repo "${HEAD_REPO:-}" "$THIS_REPO")"
+          if [ "$tier" = "refuse" ]; then
+            echo "Head branch is in ${THIS_REPO}. The refusing tier applies."
+          else
+            echo "SKIPPED: THE REFUSING TIER WAS NOT APPLIED. The head branch is in"
+            echo "'${HEAD_REPO:-<not named by the event>}', which is not ${THIS_REPO}."
+            echo "Everything below is reported as an annotation and none of it can red"
+            echo "this check. Whoever handles this contribution carries what it found."
+          fi
+
+          # Fail closed on a range that cannot be walked. A range this check
+          # could not read is a refusal, not a pass.
+          if ! merge_base=$(git merge-base "$BASE_SHA" "$HEAD_SHA"); then
+            echo "::error::Could not find the merge base of ${BASE_SHA} and ${HEAD_SHA}. Refusing rather than passing a range that was never read."
+            exit 1
+          fi
+          if ! commits=$(git rev-list --no-merges "${merge_base}..${HEAD_SHA}"); then
+            echo "::error::Could not walk ${merge_base}..${HEAD_SHA}. Refusing rather than passing a range that was never read."
+            exit 1
+          fi
+
+          found=0
+
+          if body_names_an_issue "${PR_BODY:-}"; then
+            echo "The body names an issue."
+          else
+            found=1
+            if [ "$tier" = "refuse" ]; then
+              echo "::error::This pull request body names no issue. Write the issue number as #<number>, or link the issue, so the change has a stated reason somewhere other than the diff."
+            else
+              echo "::warning::This pull request body names no issue. Not refused, because the head branch is outside this repository."
+            fi
+          fi
+
+          n=0
+          for sha in $commits; do
+            n=$((n + 1))
+            msg=$(git show -s --format=%B "$sha")
+            if message_is_in_the_table "$msg"; then
+              continue
+            fi
+            found=1
+            offending=$(printf '%s' "$msg" \
+              | LC_ALL=C tr -d '\011\012\040-\176' \
+              | LC_ALL=C od -An -c \
+              | tr '\n' ' ')
+            if [ "$tier" = "refuse" ]; then
+              echo "::error::Commit ${sha} carries a character in its message outside the permitted table, which is printable ASCII plus line feed and horizontal tab. What was found, as escapes: ${offending}"
+            else
+              echo "::warning::Commit ${sha} carries a character in its message outside the permitted table. Not refused, because the head branch is outside this repository. What was found, as escapes: ${offending}"
+            fi
+          done
+          echo "Read ${n} non-merge commit message(s) in ${merge_base}..${HEAD_SHA}."
+
+          changed=$(git diff --numstat "$merge_base" "$HEAD_SHA" | awk '{a += $1; d += $2} END {print a + d + 0}')
+          if [ "$changed" -gt 400 ]; then
+            echo "::warning::This pull request changes ${changed} lines, which is over the 400-line mark this project reads by. This is a warning and never a refusal: a bulk transcription of a measurement series legitimately runs long, and refusing length teaches people to split work in ways that make review harder."
+          else
+            echo "Diff size ${changed} lines, under the 400-line mark."
+          fi
+
+          if [ "$found" -eq 0 ]; then
+            echo "Nothing refused and nothing to annotate."
+            exit 0
+          fi
+          if [ "$tier" = "refuse" ]; then
+            exit 1
+          fi
+          echo "The findings above were annotated. This check does not red an outside contribution."
