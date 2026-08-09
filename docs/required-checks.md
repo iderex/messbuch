@@ -286,6 +286,31 @@ merged:
     [{"name":"Analyze (go)","app":"github-actions","conclusion":"failure"},
      {"name":"CodeQL","app":"github-advanced-security","conclusion":"failure"}]
 
+`Validate the corpus` is confirmed against
+`c1635d9176c7d6a2f46b7c96791daff873e3f09f`, the head of the pull request that
+added it:
+
+    [{"app":"github-actions","conclusion":"success","name":"Analyze (go)"},
+     {"app":"github-actions","conclusion":"success","name":"Audit workflows (zizmor)"},
+     {"app":"github-actions","conclusion":"success","name":"Build and test"},
+     {"app":"github-advanced-security","conclusion":"success","name":"CodeQL"},
+     {"app":"github-actions","conclusion":"success","name":"DCO sign-off"},
+     {"app":"github-actions","conclusion":"success","name":"Deterministic PR-hygiene checks"},
+     {"app":"github-actions","conclusion":"success","name":"Format and lint"},
+     {"app":"github-actions","conclusion":"success","name":"No network outside the net package"},
+     {"app":"github-actions","conclusion":"success","name":"Reject Trojan Source Unicode"},
+     {"app":"github-actions","conclusion":"success","name":"Reject Trojan Source Unicode"},
+     {"app":"github-actions","conclusion":"success","name":"Validate the corpus"},
+     {"app":"github-actions","conclusion":"success","name":"dependency-review"},
+     {"app":"github-advanced-security","conclusion":"success","name":"zizmor"}]
+
+Red, on `f759a56fe7456d644311381a0f88af24621deae3`, a branch carrying a file
+under `record/` that misspells a required field, which is never merged:
+
+    gh api repos/iderex/messbuch/commits/f759a56fe7456d644311381a0f88af24621deae3/check-runs \
+      --jq '[.check_runs[] | select(.name=="Validate the corpus") | {name, app: .app.slug, conclusion}]'
+    [{"app":"github-actions","conclusion":"failure","name":"Validate the corpus"}]
+
 The older output also shows two things the table did not predict, and both are
 the sort of thing that turns a required check into a deadlock.
 
