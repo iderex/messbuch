@@ -101,7 +101,7 @@ is adopted as it stands and carries one line wherever this board deviates.
 | The workflow audit | `zizmor.yml`, `Audit workflows (zizmor)` | Adopted, and already in place | In place, `.github/workflows/zizmor.yml` | |
 | The sign off check | `dco.yml`, `DCO sign-off` | Adopted, and already in place | In place, `.github/workflows/dco.yml`, with the `DCO` file it certifies against | |
 | The pull request hygiene check | `pr-hygiene.yml`, `Deterministic PR-hygiene checks` | Adopted, and already in place | In place, landed by #72 | |
-| A greppable invariants lint, run as token patterns rather than through a language parser, where a finding exits non-zero | `opengrep.yml`, `Enforce greppable invariants`, running `opengrep scan --config tools/opengrep/rules.yml --error .` | Adopted, with different invariants | #65 lands the first invariant, no network capable import outside the one permitted package | The invariants are this board's, not that board's: nothing here authorises a login, and the properties worth grepping for are about what the corpus and the validator may reach |
+| A greppable invariants lint, run as token patterns rather than through a language parser, where a finding exits non-zero | `opengrep.yml`, `Enforce greppable invariants`, running `opengrep scan --config tools/opengrep/rules.yml --error .` | Adopted, with different invariants and a different reader | In place, landed by #65 as `.github/workflows/no-network-imports.yml` | The invariants are this board's, not that board's: nothing here authorises a login, and the property worth refusing is what the corpus and the validator may reach. The first one is also not decided by token patterns. A grep for `net/http` reads a comment, a string and a vendored copy alike, and it cannot see a package that reaches a socket three imports away without naming it; the leg reads the import graph the compiler would build instead. A later invariant that is genuinely a token pattern can still arrive as a second leg |
 | An application binary interface floor build, so the artifact stays loadable inside the oldest supported host | `dotnet.yml`, `ABI floor build` | Not applicable, with an equivalent | #61 | There is no host application to stay loadable inside; the equivalent breakage here is a schema change that makes an existing corpus unreadable, so the parity leg is a format compatibility check rather than a build |
 | A package build of the shipped artifact | `dotnet.yml`, `Package (JPRM)`, calling `build.yml`, context `Package (JPRM) / Build package` | Adapted | #56 | A release here is a data artifact as well as a binary, so the package step has two outputs rather than one |
 | An inventory of what shipped, generated at release time | `build.yml`, `Generate SBOM`, context `Package (JPRM) / Generate SBOM` | Adapted | #53 for the inventory, #56 for publishing it with the release | The inventory has to cover the corpus artifact as well as the binary's dependencies, since a corpus release with no statement of which series and which revisions it holds is an opaque blob |
@@ -150,23 +150,27 @@ does not find two issues the map never mentions and conclude the map is stale.
 ## Which legs are not yet in place
 
 Plainly, and this is the important section. Of the seventeen legs in the map,
-five are in place on this board and one needs nothing built at all. The other
-eleven name work this board still owes, and eight of the eleven were waiting on
-a source tree to build against, which now exists.
+six are in place on this board and one needs nothing built at all. The other ten
+name work this board still owes, and seven of the ten were waiting on a source
+tree to build against, which now exists.
 
 In place today, all reporting on every pull request:
 
-    git ls-tree --name-only origin/main .github/workflows/
+    git ls-files .github/workflows/
     .github/workflows/dco.yml
     .github/workflows/dependency-review.yml
+    .github/workflows/no-network-imports.yml
     .github/workflows/pr-hygiene.yml
     .github/workflows/scorecard.yml
     .github/workflows/unicode-guard.yml
     .github/workflows/zizmor.yml
 
+Run on the branch that lands the network check. Before it, that list is the same
+without `no-network-imports.yml`.
+
 That is the sign off check, dependency review, the pull request hygiene check,
-the unicode guard and the workflow audit. `scorecard.yml` is not a gate leg and
-`docs/required-checks.md` says why it must never be required.
+the unicode guard, the workflow audit and the invariants leg. `scorecard.yml` is
+not a gate leg and `docs/required-checks.md` says why it must never be required.
 
 Not in place as a check on a pull request, and no longer waiting on the source
 tree or the dependency manifest they read, because both now exist:
@@ -175,29 +179,31 @@ tree or the dependency manifest they read, because both now exist:
     11
 
 The locked restore, the build with warnings as errors, the test suite, the
-coverage bar, the formatter check, the static analysis, the greppable invariants
-lint and the format compatibility check are all in that state. The first of them
-to land was the toolchain pin and the single command, #14, and the rest wrap or
-read what it creates.
+coverage bar, the formatter check, the static analysis and the format
+compatibility check are all in that state. The first of them to land was the
+toolchain pin and the single command, #14, and the rest wrap or read what it
+creates.
 
-Two of those eight now exist inside that command rather than merely being
+Two of those seven now exist inside that command rather than merely being
 startable. The locked restore is its `modules` leg, which runs `go mod verify`
 against `go.sum` with `-mod=readonly` set, so a build cannot quietly rewrite the
 pins to make itself work. The build is its `build` leg. Warnings as errors is
 not part of either and is owed by #16 and #17, which decide the spelling.
 
-Nothing on a pull request runs that command yet, and that distinction is the
-whole subject of this section. Until #16 lands, a leg of the single command is
-something a contributor runs and not something this board refuses a change over.
-The command prints which of its own legs it did not run, and that output is the
-authority for the covered set rather than this document:
+One leg of that command runs on a pull request and the rest do not, and the
+distinction is the whole subject of this section. `no-network-imports.yml`
+invokes the single leg it reports under, so the offline boundary is something
+this board refuses a change over. Everything else in the command is still
+something a contributor runs, until #16 wraps the whole of it. The command
+prints which of its own legs it did not run, and that output is the authority
+for the covered set rather than this document:
 
     go run . ci
 
 Not in place, and blocked on something other than the source tree: the package
 build and the release inventory, which need a release to be published at all, and
-which sit on the release milestone behind #56. That is ten of the eleven. The
-eleventh is the network integration harness, which is owed by #15 and is the one
+which sit on the release milestone behind #56. That is nine of the ten. The
+tenth is the network integration harness, which is owed by #15 and is the one
 piece of parity work here that is deliberately never a gate leg.
 
 Two of the legs already in place reported on a subject that did not exist, and
@@ -207,14 +213,20 @@ now give it a manifest to review. The pull request hygiene check reads the pull
 request rather than the tree, so it is the leg here that has been fully doing
 its job throughout.
 
-Nothing on this board's protected branch is required yet:
+Five checks are required on this board's protected branch, and the invariants
+leg is not among them:
 
-    gh api repos/iderex/messbuch/rules/branches/main --jq '[.[].type] | join(" ")'
-    deletion non_fast_forward pull_request
+    gh api repos/iderex/messbuch/rules/branches/main \
+      --jq '.[] | select(.type=="required_status_checks")
+            | [.parameters.required_status_checks[].context] | join("; ")'
+    DCO sign-off; dependency-review; Deterministic PR-hygiene checks; Reject Trojan Source Unicode; Audit workflows (zizmor)
 
-So every check named above is advice until the required set is configured, which
-is the first item on the release checklist for exactly this reason, and which
-`docs/required-checks.md` is written to be read against.
+That is the five that were already reporting when the set was configured. A
+check outside that list reports and does not refuse a merge, so `No network
+outside the net package` is advice on the branch until the maintainer adds the
+string. Which strings belong in the set is what `docs/required-checks.md` is
+written to be read against, and configuring it is the first item on the release
+checklist.
 
 ## What checks this
 
