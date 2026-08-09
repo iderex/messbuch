@@ -66,10 +66,12 @@ not here: it needs a contact address whose domain is undecided, so nothing is
 downstream of it yet and it gets a row when it lands.
 
 The machine readable schema now has a row above and it points at the two
-packages that read it. What is still owed there is the leg that decides meaning
-rather than structure, which is #25, and the command that prints the schema for
-a contributor, which is #23. The curation guide is downstream of the field set
-too and now has its own row above.
+packages that read it. The command that prints the schema for a contributor is
+one of them: it lives in `internal/schema`, renders the loaded file and
+restates nothing, so the row that already covers that package covers it and it
+gets no row of its own. What is still owed is the leg that decides meaning
+rather than structure, which is #25. The curation guide is downstream of the
+field set too and now has its own row above.
 
 The `group/` registry now has a row, above, and it is a row about the shape
 rather than about the entries. `docs/decisions/0004-record-schema.md` still
