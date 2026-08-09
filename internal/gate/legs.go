@@ -60,6 +60,12 @@ func Legs() []Leg {
 			Limits:  limitsOfValidateCorpus,
 		},
 		{
+			ID:      "refusal-sites",
+			Subject: "every place the validator can refuse is executed by a fixture",
+			Run:     refusalSitesLeg,
+			Limits:  limitsOfRefusalSites,
+		},
+		{
 			ID:      "no-network-imports",
 			Subject: "no package outside internal/net reaches a network-capable API",
 			Run:     noNetworkImportsLeg,

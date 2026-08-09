@@ -31,10 +31,12 @@ under `vocabulary/`, a `group.id` resolving to no file under `group/` and a
 conditions in this file say in their own text that no reading of a record
 decides them, and the structural leg leaves both alone.
 
-#26 owes the accounting per refusal site rather than per refusal name. The
-suite behind the structural leg refuses a named refusal no fixture reaches;
-what it does not do is notice a second branch inside one name that no fixture
-reaches, and those two are not the same statement.
+The accounting over the refusals is in place at both levels. The suite behind
+the structural leg refuses a named refusal that no fixture reaches, and a leg
+of the gate refuses a refusal SITE that no fixture executes, which is the level
+that catches a second branch added inside an existing name:
+
+    go run . ci refusal-sites
 
 There is still no command that prints this file. #23 asks for one and it is not
 here; what a contributor can do today is read it, which is why it carries a

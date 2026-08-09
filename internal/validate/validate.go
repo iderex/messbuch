@@ -53,8 +53,9 @@ type Site struct {
 //
 // A refusal whose id is not here, and an id here that no input reaches, are
 // both refused by this package's own suite. That is the accounting at the id
-// level; the accounting per refusal SITE inside an id, where one id is reached
-// from two branches, is #26 and is not claimed here.
+// level. The accounting per refusal SITE, which catches a second branch added
+// under an id that already has a fixture, is the gate's refusal-sites leg and
+// reads this package's source rather than this list.
 var Catalogue = []Site{
 	{"record-does-not-parse", "a record file that is not TOML at all"},
 	{"record-in-the-wrong-place", "a file under record/ whose path is not the path a record is written at"},
@@ -99,6 +100,18 @@ type Refusal struct {
 	Expected string
 }
 
+// newRefusal is the one place a Refusal is made.
+//
+// Every refusal in this package goes through it, which is what lets the
+// accounting over refusal SITES find them by reading the source: a site is a
+// call to this function, and the site list is derived rather than remembered.
+func newRefusal(site, file, field, found, expected string) Refusal {
+	if !siteExists[site] {
+		panic("validate: refusal site " + site + " is not in the catalogue, so nothing would print it")
+	}
+	return Refusal{Site: site, File: file, Field: field, Found: found, Expected: expected}
+}
+
 func (r Refusal) String() string {
 	where := r.File
 	if r.Field != "" {
@@ -141,44 +154,24 @@ func Record(rel string, content []byte, set *schema.Set) []Refusal {
 		if ok := asParseError(err, &parseErr); ok {
 			found = fmt.Sprintf("a parse failure at line %d: %s", parseErr.Position.Line, parseErr.Message)
 		}
-		return []Refusal{{
-			Site:     "record-does-not-parse",
-			File:     rel,
-			Found:    found,
-			Expected: "a file that decodes as TOML",
-		}}
+		return []Refusal{newRefusal("record-does-not-parse", rel, "", found, "a file that decodes as TOML")}
 	}
 
 	versionKey := "schema_version"
 	raw, present := root[versionKey]
 	if !present {
-		return []Refusal{{
-			Site:     "schema-version",
-			File:     rel,
-			Field:    versionKey,
-			Found:    "nothing",
-			Expected: "one of the schema versions this tree carries a file for: " + versionList(set),
-		}}
+		return []Refusal{newRefusal("schema-version", rel, versionKey, "nothing",
+			"one of the schema versions this tree carries a file for: "+versionList(set))}
 	}
 	version, ok := raw.(int64)
 	if !ok {
-		return []Refusal{{
-			Site:     "schema-version",
-			File:     rel,
-			Field:    versionKey,
-			Found:    describe(raw),
-			Expected: "an integer naming one of " + versionList(set),
-		}}
+		return []Refusal{newRefusal("schema-version", rel, versionKey, describe(raw),
+			"an integer naming one of "+versionList(set))}
 	}
 	s, ok := set.Versions[int(version)]
 	if !ok {
-		return []Refusal{{
-			Site:     "schema-version",
-			File:     rel,
-			Field:    versionKey,
-			Found:    describe(raw),
-			Expected: "one of " + versionList(set) + ", each of which is a file in this tree; a record naming a version whose file is gone is a record nothing can read",
-		}}
+		return []Refusal{newRefusal("schema-version", rel, versionKey, describe(raw),
+			"one of "+versionList(set)+", each of which is a file in this tree; a record naming a version whose file is gone is a record nothing can read")}
 	}
 
 	c := &checker{s: s, file: rel, root: root}
@@ -218,10 +211,7 @@ type checker struct {
 }
 
 func (c *checker) refuse(site, field, found, expected string) {
-	if !siteExists[site] {
-		panic("validate: refusal site " + site + " is not in the catalogue, so nothing would print it")
-	}
-	c.out = append(c.out, Refusal{Site: site, File: c.file, Field: field, Found: found, Expected: expected})
+	c.out = append(c.out, newRefusal(site, c.file, field, found, expected))
 }
 
 // A node is one level of the tree of paths the schema declares. An interior
