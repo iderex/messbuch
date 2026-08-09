@@ -56,11 +56,8 @@ func Legs() []Leg {
 		{
 			ID:      "validate-corpus",
 			Subject: "each record against the schema",
-			Owed: "not built. Issue #24 owes the structural leg and #25 the meaning leg,\n" +
-				"both against the machine readable schema on #23. The corpus-decodes leg\n" +
-				"above answers only whether a file parses, so an unknown field, a missing\n" +
-				"required field, a value outside a closed set and a file in the wrong place\n" +
-				"all pass this run.",
+			Run:     validateCorpusLeg,
+			Limits:  limitsOfValidateCorpus,
 		},
 		{
 			ID:      "no-network-imports",

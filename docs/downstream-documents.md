@@ -28,7 +28,8 @@ touched.
 | The directory layout, the file naming rule or the tracked format under `record/` | `docs/decisions/0003-storage-format.md`, `docs/corrections.md`, and `record/_example/1900-example-01.toml`, which is the committed illustration of the layout |
 | Any uncertainty field name or the `uncertainty_status` value set | `docs/decisions/0005-uncertainty.md`, which writes out all seven cases in those field names, `docs/decisions/0004-record-schema.md`, which lists them as fields of a record, and `docs/corrections.md`, which describes absent against zero in them |
 | Any unit, conversion or normalization field name | `docs/decisions/0007-units.md`, which states the relationship between the published and the normalized value in those names, and `docs/decisions/0004-record-schema.md`, which lists them as fields of a record |
-| Any field name, type, presence rule, closed value set or path in `schema/record-1.toml` | Nothing downstream reads that file yet, and the day one does it goes here first. Today the direction runs the other way: the file is downstream of the decision records in the row below, and `schema/README.md` is downstream of the file, since it counts the names that originate there and states what the version cannot express |
+| Any field name, type, presence rule, closed value set or path in `schema/record-1.toml` | `internal/schema` and `internal/validate`, which read that file and restate none of it, so a field added there is checked without a line of Go moving and a key added there that the loader does not read reds the gate. Then `schema/README.md`, which counts the names that originate in the file and states what the version cannot express, and `docs/required-checks.md`, whose `Validate the corpus` row says what that leg refuses. Every record under `record/` goes wrong too, since a presence or value-set change is a change to files already written against the old rule |
+| A refusal the structural leg can produce, or the id it is produced under | `docs/required-checks.md`, whose `Validate the corpus` row summarises the set, and nothing else, because the set itself is printed by `go run . refusals` rather than written down. A refusal added with no line in the catalogue is refused by the leg's own suite |
 | Any field name, required-or-optional decision, or closed value set in the record schema | `schema/record-1.toml`, which is the machine readable form of the same field set and is what a program reads, then `docs/decisions/0004-record-schema.md`, then every record that writes a field name out: `docs/decisions/0005-uncertainty.md`, `docs/decisions/0007-units.md`, `docs/decisions/0008-provenance.md`, `docs/decisions/0012-where-correction-history-lives.md`, `docs/corrections.md`, `record/_example/1900-example-01.toml`, and `docs/curation.md`, which names a field wherever the judgement it teaches is about that field |
 | Which value a transcriber takes when a source gives several, how an unusual uncertainty is written, whether a conversion may be done by hand, what counts as a second reading, or how a group is chosen | `docs/curation.md`, which is followed literally by somebody transcribing measurements, so a rule that moves without it produces a batch of records that have to be redone rather than merely confusing a reader |
 | Dropping an analysis issue from a milestone | `docs/decisions/0004-record-schema.md`, which names per field the analysis that needs it, so a dropped analysis leaves a field with no reason |
@@ -63,10 +64,11 @@ and `SECURITY.md`. The third document that issue asks for, a code of conduct, is
 not here: it needs a contact address whose domain is undecided, so nothing is
 downstream of it yet and it gets a row when it lands.
 
-The machine readable schema now has a row above. What is still owed is the
-validator that reads it and the command that prints it, both of which will be
-downstream of the file rather than of the decision records. The curation guide
-is downstream of the field set too and now has its own row above.
+The machine readable schema now has a row above and it points at the two
+packages that read it. What is still owed there is the leg that decides meaning
+rather than structure, which is #25, and the command that prints the schema for
+a contributor, which is #23. The curation guide is downstream of the field set
+too and now has its own row above.
 
 The `group/` registry now has a row, above, and it is a row about the shape
 rather than about the entries. `docs/decisions/0004-record-schema.md` still

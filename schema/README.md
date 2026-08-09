@@ -9,24 +9,40 @@ The decision records under `docs/decisions/` are where each field was argued and
 they stay the place to argue with one. What they are not is the place a program
 reads.
 
-## Nothing reads it yet
+## What reads it, and what still does not
 
-`PROSE, NOT ENFORCEMENT`, issue #23. There is no validator in this repository
-and no code in this tree opens `record-1.toml`. The gate parses it as TOML,
-which is the same thing it does to every tracked TOML file and is not a
-statement about its contents:
+`internal/schema` reads it and `internal/validate` applies it. The structural
+leg of the gate is what a contributor meets:
 
-    go run . ci corpus-decodes
-    ok       corpus-decodes     3 TOML file(s) decode; field and placement rules are not checked here
+    go run . ci validate-corpus
 
-So a record contradicting every rule in that file passes every route here today,
-and a value set in it that no record ever satisfies would also pass. #24 owes
-the structural leg, #25 the meaning leg, and #26 the fixture behind each
-refusal. Until those land this file is a specification nobody has implemented.
+Nothing in that path restates a field name, a presence rule, a closed value set
+or a pattern. All of it is read from this file, so a field added here is checked
+without a line of Go moving, and a key written here that the loader does not
+read is refused rather than skipped. That last one is the property worth
+knowing: a rule written in the authority and applied by nothing would read as
+enforced to everybody who opens the file, which is worse than an absent rule.
 
-There is also no command that prints it. #23 asks for one and it is not here;
-what a contributor can do today is read the file, which is why it carries a
-comment per section and a `means` line per field.
+Half the file is still applied by nobody, and it is the half about meaning.
+#25 owes the leg that opens a second file to decide the first, so
+`resolves_to` is read by nothing: a `measurement.quantity` naming no entry
+under `vocabulary/`, a `group.id` resolving to no file under `group/` and a
+`lineage.supersedes` naming a record that does not exist all pass today. Two
+conditions in this file say in their own text that no reading of a record
+decides them, and the structural leg leaves both alone.
+
+#26 owes the accounting per refusal site rather than per refusal name. The
+suite behind the structural leg refuses a named refusal no fixture reaches;
+what it does not do is notice a second branch inside one name that no fixture
+reaches, and those two are not the same statement.
+
+There is still no command that prints this file. #23 asks for one and it is not
+here; what a contributor can do today is read it, which is why it carries a
+comment per section and a `means` line per field. What is printed is the
+validator's side of it, which is every refusal that reading this file can
+produce:
+
+    go run . refusals
 
 ## The shape of an entry
 
@@ -43,6 +59,20 @@ is not carried.
 
 Composite types carry `[[type.<name>.member]]` entries with the same members,
 minus `path`, plus `name`.
+
+One type name in `record-1.toml` is neither, and the sentence above did not
+predict it:
+
+    grep -n 'identifier-or-literal' schema/record-1.toml
+    197:type = "identifier-or-literal"
+
+`measurement.denominator_quantity` is an identifier or one of the values in its
+own `literals` list, and nothing under `[scalar.*]` or `[type.*]` carries that
+name. The loader reads the suffix as meaning exactly that, so the alternatives
+stay in the field's own entry rather than moving into the validator's source.
+Whether the file should instead declare the type, or the paragraph above should
+admit a third shape, is a question for `record-1.toml` and is not settled by
+this note.
 
 ## The presence vocabulary
 

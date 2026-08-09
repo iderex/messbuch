@@ -170,24 +170,36 @@ In place today, all reporting on every pull request:
     .github/workflows/pr-hygiene.yml
     .github/workflows/scorecard.yml
     .github/workflows/unicode-guard.yml
+    .github/workflows/validate-corpus.yml
     .github/workflows/zizmor.yml
 
-Run on the branch that lands the static analysis. Before it, that list is the
-same without `codeql.yml`.
+Run on the branch that lands the structural half of the corpus validator.
+Before it, that list is the same without `validate-corpus.yml`.
 
 That is the build and test check, the static analysis, the sign off check,
 dependency review, the formatter check, the pull request hygiene check, the
 unicode guard, the workflow audit and the invariants leg. `scorecard.yml` is not a gate leg and
 `docs/required-checks.md` says why it must never be required.
 
+One file in that list corresponds to no row in the map above, and the mismatch
+is the honest state rather than an omission. `validate-corpus.yml` reports under
+`Validate the corpus` and was landed by #24. The board being copied from has no
+counterpart to it: nothing there reads a corpus of transcribed numbers, so there
+was no leg to adopt, adapt or decline, and putting a row in the map for it would
+claim a comparison that was never made. Counting the workflow files and counting
+the legs of the map therefore give different answers, and they are answers to
+different questions.
+
 Not in place as a check on a pull request, and no longer waiting on the source
 tree or the dependency manifest they read, because both now exist:
 
     git ls-files | grep -cE '\.go$|go\.mod|go\.sum'
-    11
+    46
 
 The coverage bar and the format compatibility check are what is left in that
-state. The first to land was the toolchain pin and the
+state. The number above was 11 when this section was written and nothing moved
+it while three landings added source, which is the shape of drift a pasted count
+has: it stays plausible. Re-run it rather than reading it. The first to land was the toolchain pin and the
 single command, #14, and the rest wrap or read what it creates. The locked
 restore, the build with warnings as errors and the test suite came off this
 list with #16, which runs the whole of that command on every pull request, so

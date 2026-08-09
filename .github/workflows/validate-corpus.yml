@@ -1,0 +1,86 @@
+# The structural half of the corpus validator (#24). A record that is not a
+# well formed record reaches the corpus otherwise, and the failure it produces
+# is the quiet one: a misspelled field name is data that silently did not
+# arrive, and nothing downstream can tell it from data that was never there.
+#
+# It runs one leg of the local gate rather than the whole gate. A job reporting
+# under a name that claims one property, and failing when a formatter is red,
+# teaches a reader that the name means nothing in particular.
+# `go run . ci validate-corpus` refuses an id the gate does not declare, so
+# renaming the leg reds this job instead of quietly running nothing.
+#
+# What the leg refuses and what it cannot see are not restated here. The leg
+# prints its limits beside its result, and every refusal it can produce is
+# printed by `go run . refusals`, so a copy in this file would drift against
+# the code that decides both.
+name: Validate the corpus
+
+on:
+  # No branch filter, no path filter, no base filter. A check that reports on
+  # only some pull requests leaves the branch looking guarded when it is not,
+  # which docs/required-checks.md argues is worse than no check at all. A path
+  # filter would be the same defect in a quieter form here: the schema decides
+  # every record, so a change to schema/ is a change to every file under
+  # record/ whether or not the pull request touched one.
+  pull_request:
+
+# Read-only. The job reads the checked-out tree and writes nothing anywhere.
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-corpus-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  validate-corpus:
+    # The literal check-run name a branch protection matches, fixed by #24 and
+    # written in docs/required-checks.md. Renaming it empties a required set
+    # without reporting anything.
+    name: Validate the corpus
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # No step pushes, so do not leave the token in .git/config.
+          persist-credentials: false
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          # The pin in go.mod and nothing else. A version written here would be
+          # a second pin, and the two would disagree on the day one moves.
+          go-version-file: go.mod
+
+      # The proof before the check, on every invocation. Every refusal the leg
+      # can produce is reached by a fixture that is one edit away from a legal
+      # record, and the suite refuses a catalogue entry no fixture reaches. A
+      # guard nobody has seen fail is a guard nobody knows works.
+      #
+      # Two packages and no name filter, because these two hold this leg's
+      # proofs and nothing else. The test that reads this repository's own tree
+      # lives in internal/gate and is outside this step deliberately: judging
+      # the tree is the step below, and its refusal names the file and the
+      # field where a test failure would only say a test failed.
+      #
+      # The floor is what stops a step that has stopped running proofs from
+      # passing silently, which is the failure mode a filtered or narrowed test
+      # run introduces.
+      - name: Prove every refusal is reached by a fixture, and the near misses are not
+        run: |
+          set -euo pipefail
+          out=$(go test ./internal/schema ./internal/validate -count=1 -v)
+          printf '%s\n' "$out"
+          ran=$(printf '%s\n' "$out" | grep -c '^--- PASS' || true)
+          if [ "$ran" -lt 45 ]; then
+            echo "::error::Expected at least 45 proofs of this leg and ${ran} ran. Either a package in this step no longer holds them, or a proof was deleted."
+            exit 1
+          fi
+          echo "${ran} proof(s) of this leg ran."
+
+      - name: List every refusal this leg can produce
+        run: go run . refusals
+
+      - name: Refuse a file under record/ that is not a well formed record
+        run: go run . ci validate-corpus
