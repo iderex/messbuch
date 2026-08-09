@@ -12,6 +12,7 @@ import (
 // byte is the point, because a literal would be normalised by this
 // repository's own text attributes on the way into git and the byte the
 // fixture exists to prove would be gone.
+//
 // A tree gets a module and one already-formatted package unless the caller
 // wrote its own, because the lint half runs go vet over the tree and a
 // directory with no module would fail for a reason no fixture here is about.
@@ -45,7 +46,7 @@ func read(t *testing.T, root, name string) string {
 
 // A trailing space is invisible in every editor and shows up in every diff.
 // The fix has to remove it, and the check has to name the file.
-func TestATrailingSpaceIsRefusedAndTheFixRemovesIt(t *testing.T) {
+func TestFormatLegTrailingSpaceIsRefusedAndTheFixRemovesIt(t *testing.T) {
 	root := tree(t, map[string]string{
 		"docs/note.md": "A line with one trailing space\x20\nand a clean one\n",
 	})
@@ -70,7 +71,7 @@ func TestATrailingSpaceIsRefusedAndTheFixRemovesIt(t *testing.T) {
 
 // A file with no final newline makes the next line added to it show up as two
 // changed lines instead of one.
-func TestAMissingFinalNewlineIsRefusedAndTheFixAddsIt(t *testing.T) {
+func TestFormatLegMissingFinalNewlineIsRefusedAndTheFixAddsIt(t *testing.T) {
 	root := tree(t, map[string]string{"docs/note.md": "one line and no newline"})
 
 	if _, err := formatAndLintLeg(root); err == nil {
@@ -86,7 +87,7 @@ func TestAMissingFinalNewlineIsRefusedAndTheFixAddsIt(t *testing.T) {
 
 // The Go half. gofmt's own opinion, reached through the package gofmt calls,
 // so the check cannot drift into a second opinion about what formatted means.
-func TestUnformattedGoIsRefusedAndTheFixFormatsIt(t *testing.T) {
+func TestFormatLegUnformattedGoIsRefusedAndTheFixFormatsIt(t *testing.T) {
 	root := tree(t, map[string]string{
 		"go.mod":  "module messbuch.example/fixture\n\ngo 1.26.0\n",
 		"bad.go":  "package fixture\n\nfunc  Wrong( ) int {\nreturn 1\n}\n",
@@ -116,7 +117,7 @@ func TestUnformattedGoIsRefusedAndTheFixFormatsIt(t *testing.T) {
 // The refusal carries the command that repairs it. A check that says a file is
 // wrong without saying what produces the right bytes leaves every contributor
 // guessing at the difference between their formatter and this one.
-func TestTheRefusalNamesTheFixCommand(t *testing.T) {
+func TestFormatLegRefusalNamesTheFixCommand(t *testing.T) {
 	root := tree(t, map[string]string{"docs/note.md": "trailing\x20\n"})
 	_, err := formatAndLintLeg(root)
 	if err == nil {
@@ -130,7 +131,7 @@ func TestTheRefusalNamesTheFixCommand(t *testing.T) {
 // The check and the fix agree. This is the property the whole shape exists
 // for: a tree the fix has been run on passes, with nothing left over for a
 // second run to find.
-func TestATreeTheFixHasRunOnPasses(t *testing.T) {
+func TestFormatLegTreeTheFixHasRunOnPasses(t *testing.T) {
 	root := tree(t, map[string]string{
 		"go.mod":       "module messbuch.example/fixture\n\ngo 1.26.0\n",
 		"bad.go":       "package fixture\n\nfunc  Wrong( ) int {\n\treturn 1\n}\n",
@@ -156,7 +157,7 @@ func TestATreeTheFixHasRunOnPasses(t *testing.T) {
 // feed is a fact about somebody's checkout, and a formatter that reported
 // every file in a clean clone as wrong would drown a real defect in noise.
 // .gitattributes is what settles the stored bytes; this leg does not.
-func TestACarriageReturnIsNotAFormattingDefect(t *testing.T) {
+func TestFormatLegCarriageReturnIsNotADefect(t *testing.T) {
 	root := tree(t, map[string]string{"docs/note.md": "one line\r\nanother\r\n"})
 	if _, err := formatAndLintLeg(root); err != nil {
 		t.Fatalf("a checkout with CRLF was refused as misformatted: %v", err)
@@ -168,7 +169,7 @@ func TestACarriageReturnIsNotAFormattingDefect(t *testing.T) {
 
 // A trailing space before a carriage return is still a trailing space, and it
 // is the one a naive rule misses.
-func TestATrailingSpaceBeforeACarriageReturnIsRefused(t *testing.T) {
+func TestFormatLegTrailingSpaceBeforeACarriageReturnIsRefused(t *testing.T) {
 	root := tree(t, map[string]string{"docs/note.md": "one line\x20\r\n"})
 	if _, err := formatAndLintLeg(root); err == nil {
 		t.Fatal("a trailing space before a carriage return passed")
@@ -183,7 +184,7 @@ func TestATrailingSpaceBeforeACarriageReturnIsRefused(t *testing.T) {
 
 // Source that does not parse is the build leg's refusal. Two refusals for one
 // defect is one refusal too many, and the second one says the wrong thing.
-func TestAGoFileThatDoesNotParseIsNotThisLegsRefusal(t *testing.T) {
+func TestFormatLegGoFileThatDoesNotParseIsNotItsRefusal(t *testing.T) {
 	root := tree(t, map[string]string{
 		"go.mod":  "module messbuch.example/fixture\n\ngo 1.26.0\n",
 		"open.go": "package fixture\n\nfunc Open() {\n",
@@ -195,7 +196,7 @@ func TestAGoFileThatDoesNotParseIsNotThisLegsRefusal(t *testing.T) {
 
 // Fixture bytes are the thing being proved elsewhere in this package, and a
 // formatter rewriting a fixture deletes the property it carries.
-func TestFilesUnderTestdataAreNotFormatted(t *testing.T) {
+func TestFormatLegFilesUnderTestdataAreNotFormatted(t *testing.T) {
 	root := tree(t, map[string]string{
 		"testdata/broken/note.md": "a fixture with a trailing space\x20\n",
 		"docs/note.md":            "clean\n",
@@ -215,7 +216,7 @@ func TestFilesUnderTestdataAreNotFormatted(t *testing.T) {
 // LICENSE and DCO are copies of texts that are not this project's to
 // normalise, and a check that rewrote one would be changing a legal
 // instrument.
-func TestTheLicenseAndTheSignOffTextAreLeftAlone(t *testing.T) {
+func TestFormatLegLicenseAndSignOffTextAreLeftAlone(t *testing.T) {
 	root := tree(t, map[string]string{
 		"LICENSE":      "a license line with a trailing space\x20\n",
 		"DCO":          "a certificate line with a trailing space\x20\n",
@@ -228,7 +229,7 @@ func TestTheLicenseAndTheSignOffTextAreLeftAlone(t *testing.T) {
 
 // Fails closed. A tree with nothing to read is a leg that examined nothing,
 // and that is not the same statement as a clean tree.
-func TestATreeWithNothingToFormatIsARefusal(t *testing.T) {
+func TestFormatLegTreeWithNothingToFormatIsARefusal(t *testing.T) {
 	if _, err := formatAndLintLeg(t.TempDir()); err == nil {
 		t.Fatal("a tree with no source and no prose passed")
 	}
@@ -236,7 +237,7 @@ func TestATreeWithNothingToFormatIsARefusal(t *testing.T) {
 
 // The tree this repository actually is. A leg green only on its own fixtures
 // says nothing about the mainline.
-func TestThisRepositoryIsFormattedAsWritten(t *testing.T) {
+func TestFormatLegThisRepositoryIsFormattedAsWritten(t *testing.T) {
 	examined, err := formatAndLintLeg("../..")
 	if err != nil {
 		t.Fatalf("this repository is not formatted as it writes: %v", err)
