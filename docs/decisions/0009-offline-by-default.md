@@ -82,14 +82,26 @@ list of what counts as network-capable is data in the check rather than a
 condition in its code, so adding a name to it is a reviewable one-line change
 rather than an edit to a matcher.
 
-The check is not written yet. `PROSE, NOT ENFORCEMENT`. Nothing in this
-repository refuses a network-capable import today: there is no source tree, no
-implementation language is fixed, and the workflows here scan workflow files,
-dependencies, commit trailers and Unicode. The name above is a name this record
-fixes so that the check can be required by the branch protection under the
-exact string, and the check itself is owed. Until it exists, the paragraph
-above describes an intention and not a property of any build, and no
-documentation of this project may say otherwise.
+The check exists, and what it does and does not cover is stated where its
+result is printed. It is the `no-network-imports` leg of the single local gate
+command, in `internal/gate/netimports.go`, and it reports on every pull request
+from `.github/workflows/no-network-imports.yml` under the exact string above.
+#65 landed it. That paragraph read `PROSE, NOT ENFORCEMENT` while there was no
+source tree to compute a graph over, and the change from an intention to a
+property is the one thing about this record that moved.
+
+It is not required by the branch protection. Five checks are required on the
+default branch and this is not one of them:
+
+    gh api repos/iderex/messbuch/rules/branches/main \
+      --jq '.[] | select(.type=="required_status_checks")
+            | [.parameters.required_status_checks[].context] | join("; ")'
+    DCO sign-off; dependency-review; Deterministic PR-hygiene checks; Reject Trojan Source Unicode; Audit workflows (zizmor)
+
+So a red run here reports and does not refuse a merge. Adding the string to that
+set is the maintainer's configuration to make, and `docs/required-checks.md` is
+where the argument for it is. Reporting and refusing are different words and
+this record uses the one that is true.
 
 The check's own limit, stated here because it will otherwise be discovered
 later and read as a defect. An import-graph check refuses a package that can

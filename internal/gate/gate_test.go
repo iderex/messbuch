@@ -142,6 +142,78 @@ func TestTheDeclaredGateIsWellFormed(t *testing.T) {
 	}
 }
 
+// A leg's limits reach the reader beside its result. A boundary printed only
+// in a decision record is a boundary the person reading the green line does
+// not have.
+func TestRunPrintsALegsLimitsBesideItsResult(t *testing.T) {
+	leg := okLeg("bounded")
+	leg.Limits = "it reads the import graph.\nIt does not read what a subprocess does."
+
+	var out chunk
+	if err := Run(&out, []Leg{leg}, t.TempDir()); err != nil {
+		t.Fatalf("Run returned %v", err)
+	}
+	for _, want := range []string{"it reads the import graph.", "It does not read what a subprocess does."} {
+		if !strings.Contains(out.String(), want) {
+			t.Errorf("the output does not carry %q:\n%s", want, out.String())
+		}
+	}
+}
+
+// The same, when the leg fails. A refusal is the moment its limits matter
+// most, because that is when somebody argues about what it covers.
+func TestRunPrintsALegsLimitsWhenItFails(t *testing.T) {
+	legs := []Leg{{
+		ID:      "bounded",
+		Subject: "the one that fails",
+		Limits:  "what this leg cannot see",
+		Run:     func(string) (string, error) { return "", errors.New("refused") },
+	}}
+
+	var out chunk
+	if err := Run(&out, legs, t.TempDir()); err == nil {
+		t.Fatal("the failing leg returned no error")
+	}
+	if !strings.Contains(out.String(), "what this leg cannot see") {
+		t.Errorf("the limits are absent from a failing run:\n%s", out.String())
+	}
+}
+
+// Only narrows the gate to one leg, which is how a workflow reporting under a
+// single fixed check name says something about that property alone.
+func TestOnlyNarrowsTheGateToOneLeg(t *testing.T) {
+	legs, err := Only([]Leg{okLeg("first"), okLeg("second")}, "second")
+	if err != nil {
+		t.Fatalf("Only returned %v", err)
+	}
+	if len(legs) != 1 || legs[0].ID != "second" {
+		t.Fatalf("Only returned %d leg(s), first is %q", len(legs), legs[0].ID)
+	}
+}
+
+// An id nobody declares is an error rather than an empty run. This is the
+// guard on renaming a leg: without it, a workflow pinned to the old id runs
+// nothing, prints nothing and reports green, and a required check that has
+// stopped checking is worse than none.
+func TestOnlyRefusesAnIdTheGateDoesNotDeclare(t *testing.T) {
+	_, err := Only([]Leg{okLeg("first")}, "no-such-leg")
+	if err == nil {
+		t.Fatal("an unknown leg id was accepted")
+	}
+	if !strings.Contains(err.Error(), "first") {
+		t.Errorf("the error does not say what the gate does declare: %v", err)
+	}
+}
+
+// The id the workflow pins has to be one the gate declares. The test above
+// proves Only refuses an unknown id; this one proves the id in
+// .github/workflows/no-network-imports.yml is not that case.
+func TestTheGateDeclaresTheLegTheNetworkWorkflowRuns(t *testing.T) {
+	if _, err := Only(Legs(), "no-network-imports"); err != nil {
+		t.Fatalf("the workflow's leg id is not in the gate: %v", err)
+	}
+}
+
 // chunk is a writer that keeps what was written, so a test can read the run's
 // own output rather than a summary of it.
 type chunk struct{ b strings.Builder }

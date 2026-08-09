@@ -58,10 +58,8 @@ func Legs() []Leg {
 		{
 			ID:      "no-network-imports",
 			Subject: "no package outside internal/net reaches a network-capable API",
-			Owed: "not built. Issue #65 owes it, under the name that\n" +
-				"docs/decisions/0009-offline-by-default.md fixes for the check. Nothing in\n" +
-				"this run computed an import graph, so the offline guarantee is an intention\n" +
-				"here and not a measured property.",
+			Run:     noNetworkImportsLeg,
+			Limits:  limitsOfNoNetworkImports,
 		},
 	}
 }

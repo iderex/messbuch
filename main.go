@@ -20,26 +20,39 @@ import (
 )
 
 func main() {
-	if len(os.Args) != 2 {
+	args := os.Args[1:]
+	if len(args) == 0 {
 		usage(os.Stderr)
 		os.Exit(2)
 	}
 
-	switch os.Args[1] {
+	switch args[0] {
 	case "ci":
+		if len(args) > 2 {
+			usage(os.Stderr)
+			os.Exit(2)
+		}
+		legs := gate.Legs()
+		if len(args) == 2 {
+			var err error
+			if legs, err = gate.Only(legs, args[1]); err != nil {
+				fmt.Fprintf(os.Stderr, "%v\n", err)
+				os.Exit(2)
+			}
+		}
 		wd, err := os.Getwd()
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "cannot read the working directory: %v\n", err)
 			os.Exit(1)
 		}
-		if err := gate.Run(os.Stdout, gate.Legs(), wd); err != nil {
+		if err := gate.Run(os.Stdout, legs, wd); err != nil {
 			fmt.Fprintf(os.Stderr, "\n%v\n", err)
 			os.Exit(1)
 		}
 	case "help", "-h", "--help":
 		usage(os.Stdout)
 	default:
-		fmt.Fprintf(os.Stderr, "unknown verb %q\n\n", os.Args[1])
+		fmt.Fprintf(os.Stderr, "unknown verb %q\n\n", args[0])
 		usage(os.Stderr)
 		os.Exit(2)
 	}
@@ -48,8 +61,9 @@ func main() {
 func usage(w *os.File) {
 	fmt.Fprint(w, `messbuch
 
-	go run . ci      run the local gate
-	go run . help    print this
+	go run . ci         run the local gate
+	go run . ci <leg>   run one leg of it, named by the id the run prints
+	go run . help       print this
 
 The gate prints its own legs, in the order it runs them, with what each one
 examined. A leg that is not built yet prints that it was not run and what is

@@ -1,0 +1,70 @@
+# The offline boundary (#65). docs/decisions/0009-offline-by-default.md rests
+# the whole offline guarantee on a check over the import graph, fixes the name
+# this job reports under so a branch protection can match it, and says the check
+# itself was owed. This is that check.
+#
+# It runs one leg of the local gate rather than the whole gate. A job reporting
+# under a name that claims one property, and failing when a formatter or a
+# transcription is red, teaches a reader that the name means nothing in
+# particular. `go run . ci no-network-imports` refuses an id the gate does not
+# declare, so renaming the leg reds this job instead of quietly running nothing.
+#
+# What the leg refuses, what it cannot see, and the list of network-capable
+# paths it reads all live in internal/gate/netimports.go. They are not restated
+# here: the leg prints its own limits beside its result, and a copy in this file
+# would drift against the code that decides it.
+name: No network outside the net package
+
+on:
+  # No branch filter, no path filter, no base filter. A check that reports on
+  # only some pull requests leaves the branch looking guarded when it is not,
+  # which docs/required-checks.md argues is worse than no check at all. A path
+  # filter would be the same defect in a quieter form here, since the property
+  # is about the import graph of the whole tree rather than about the files a
+  # pull request happens to touch.
+  pull_request:
+
+# Read-only. The job reads the checked-out tree and writes nothing anywhere.
+permissions:
+  contents: read
+
+concurrency:
+  group: no-network-imports-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  no-network-imports:
+    # The literal check-run name a branch protection matches, fixed by
+    # docs/decisions/0009-offline-by-default.md rather than by this file.
+    # Renaming it empties a required set without reporting anything.
+    name: No network outside the net package
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # No step pushes, so do not leave the token in .git/config.
+          persist-credentials: false
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          # The pin in go.mod and nothing else. A version written here would be
+          # a second pin, and the two would disagree on the day one moves.
+          go-version-file: go.mod
+
+      # The proof before the check, on every invocation. The leg is asserted
+      # against a fixture tree carrying a network-capable import outside the
+      # permitted package, and against the same tree with that import moved
+      # inside it. A guard nobody has seen fail is a guard nobody knows works,
+      # and this one is what stands behind the name in the job above.
+      #
+      # The whole package rather than a name filter over it. A filter is a
+      # second list of which tests matter, kept in a file that never sees the
+      # test somebody adds next, and a test the filter misses proves nothing
+      # while looking like it does.
+      - name: Prove the leg refuses what it names, and accepts the near miss
+        run: go test ./internal/gate -count=1 -v
+
+      - name: Refuse a network-capable import outside the net package
+        run: go run . ci no-network-imports

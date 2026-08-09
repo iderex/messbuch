@@ -6,27 +6,32 @@ pull request, so this file cannot make any of it true.
 
 ## The protection today
 
-The default branch carries one active ruleset. It requires a pull request and it
-refuses deletion and non-fast-forward pushes. It requires no status check at
-all, and it requires no approving review.
+The default branch carries one active ruleset. It requires a pull request, it
+refuses deletion and non-fast-forward pushes, and it requires five status
+checks. It requires no approving review.
 
     gh api repos/iderex/messbuch/rulesets --jq '.[] | "\(.id) \(.name) \(.enforcement)"'
     20525370 gate active
 
     gh api repos/iderex/messbuch/rulesets/20525370 --jq '[.rules[].type]'
-    ["deletion","non_fast_forward","pull_request"]
+    ["deletion","non_fast_forward","pull_request","required_status_checks"]
 
     gh api repos/iderex/messbuch/rulesets/20525370 \
       --jq '[.rules[] | select(.type=="required_status_checks") | .parameters.required_status_checks[].context]'
-    []
+    ["DCO sign-off","dependency-review","Deterministic PR-hygiene checks","Reject Trojan Source Unicode","Audit workflows (zizmor)"]
 
-So every check in this repository can be red and the merge button still works.
-Until that changes, the gate is advice.
+So a check outside that list can be red and the merge button still works. That
+is where `No network outside the net package` stands: it reports on every pull
+request and refuses nothing on the branch until the string is added to the set
+above.
 
 Run those commands rather than trusting the output pasted above. The output is
-what they printed on 2026-08-07 and it is a fact about that day. Restating a
-live setting in a document is how a document starts lying, and this file is the
-one place least able to afford it.
+what they printed on 2026-08-09. The output this section carried before was
+from 2026-08-07 and the third command printed an empty list then; when the
+setting moved is not recorded anywhere and is not claimed here. The document
+did not move with it, which is the failure this paragraph is about. Restating a live
+setting in a document is how a document starts lying, and this file is the one
+place least able to afford it.
 
 ## What the protection matches
 
@@ -66,6 +71,7 @@ stated, because a count in a sentence drifts against the table under it.
 | `Reject Trojan Source Unicode` | `.github/workflows/unicode-guard.yml` | Bidirectional and invisible Unicode control characters in tracked text, the Trojan Source class. Fails closed on a scanner error rather than reading it as a clean tree. | Yes. Triggered on `pull_request` against `"**"`, no path filter. |
 | `Audit workflows (zizmor)` | `.github/workflows/zizmor.yml` | Any actionable zizmor finding at low severity or above in the workflow files, and a workflow that fails to parse. | Yes. Triggered on `pull_request` against `"**"`. The job's only conditional is on the SARIF upload step, not on the gating step and not on the job. |
 | `Deterministic PR-hygiene checks` | `.github/workflows/pr-hygiene.yml` | A pull request body naming no issue, and a commit message carrying a byte outside printable ASCII plus line feed and horizontal tab. Fails closed if the commit range cannot be walked, and refuses before reading the pull request at all if its own fixtures do not behave as it claims. | Yes. Triggered on `pull_request` with types `opened`, `synchronize`, `reopened` and `edited`, and no branch or path filter. |
+| `No network outside the net package` | `.github/workflows/no-network-imports.yml` | A package other than `internal/net` and its own dependencies transitively reaching a network-capable import path, test files included. Fails closed: a tree whose import graph cannot be computed, and a module whose package set comes back empty, are both refusals. | Yes. Triggered on `pull_request` with the default types and no branch, path or base filter. |
 
 `Deterministic PR-hygiene checks` has a property anyone requiring it needs to
 know, and it is deliberate rather than a defect. It refuses only where the head
@@ -79,11 +85,25 @@ argument for the split is in the issue that built it, #21.
 The diff-size finding in that check is a warning and can never red it. A bulk
 transcription of a measurement series legitimately runs long.
 
-`dependency-review` has a property worth writing down before it is discovered.
-There is no dependency manifest in this repository today, so it reports without
-having anything to review. That is a check reporting green on an empty subject,
-not a check that examined a dependency set and found it clean, and it stays that
-way until the toolchain issue lands a lockfile.
+`dependency-review` had a property worth writing down and no longer has it.
+While there was no dependency manifest here it reported without having anything
+to review, which is a check green on an empty subject rather than one that
+examined a dependency set and found it clean. #14 landed `go.mod` and `go.sum`,
+so it now has a subject:
+
+    git ls-files go.mod go.sum
+    go.mod
+    go.sum
+
+`No network outside the net package` carries its own limits and they are
+printed beside its result on every run rather than only here. It refuses a
+package that can reach a socket through the import graph. It does not refuse a
+package that shells out to a program that opens one, it does not refuse a
+dependency that opens a socket from inside code the graph shows as reached for
+another reason, and it does not refuse a network-capable path that is absent
+from the table it reads. `docs/decisions/0009-offline-by-default.md` is where
+that boundary was argued and why an assurance with an unstated edge is worse in
+an audit than a narrower one that says where it stops.
 
 ## Must not be required
 
@@ -105,7 +125,6 @@ above with extra steps.
 | `Validate the corpus` | #24 | A record file that is not a well formed record: a parse failure, an unknown field, a missing required field, a wrong type, a value outside a closed set, a duplicate identifier, or a file in the wrong place for what it claims to be. |
 | not yet fixed | #17 | Formatting and lint. |
 | not yet fixed | #18 | Static analysis of the source, reporting into the code scanning tab. The issue fixes the job name as `Analyze` extended with the language where the analysis distinguishes languages, so the exact string is not knowable until the language decision lands. |
-| `No network outside the net package` | #65 | A package other than `net` reaching a network-capable API through the import graph. The string is fixed by `docs/decisions/0009-offline-by-default.md` rather than by the issue, which is why this row carries a string while the three above it do not. |
 
 When one of these lands, the pull request that lands it fills in its row here.
 A check that exists and is not in this table is a check the maintainer will not
