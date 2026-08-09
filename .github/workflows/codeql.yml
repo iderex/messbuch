@@ -34,9 +34,17 @@
 # and file contents sources, which is the whole of this project's input.
 #
 # Failing on a finding is the gate step at the bottom rather than a property of
-# the analysis step. `analyze` uploads and exits zero whatever it found, so a
-# workflow without that step reports green on a pull request that introduced an
-# alert. This is the same shape `zizmor.yml` uses and for the same reason.
+# the analysis step. `analyze` exits zero whatever it found, so a workflow
+# without that step reports green on a pull request that introduced an alert.
+#
+# The upload is a separate step from the analysis and from the gate, which is
+# the shape `zizmor.yml` already uses here. Three things follow from it and each
+# one is a reason. A read-only token cannot write security events, so on a pull
+# request from a fork the upload is skipped rather than failing the job. A
+# transient failure writing to the code-scanning tab must not decide whether a
+# finding refuses the pull request. And the gate reads the SARIF off disk, so
+# what it judges is the file the analysis produced rather than an API that may
+# not have ingested it yet.
 name: Static analysis
 
 on:
@@ -103,11 +111,24 @@ jobs:
         uses: github/codeql-action/analyze@e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81 # v4.37.3
         with:
           category: /language:${{ matrix.language }}
-          # Written to disk as well as uploaded, so the gate step below decides
-          # on the same bytes the code-scanning tab received rather than on a
-          # second query of an API that may not have ingested them yet.
+          # To disk, and uploaded by the step after this one rather than here,
+          # so that the refusal below never depends on the upload succeeding.
           output: sarif-results
-          upload: always
+          upload: never
+
+      - name: Upload SARIF
+        # Only where the token can write security events: a same-repository
+        # pull request that is not Dependabot's. A fork or Dependabot pull
+        # request runs read-only, so the upload is skipped there and the gate
+        # step below still runs and still refuses. continue-on-error keeps the
+        # two apart in the other direction as well: a code-scanning outage must
+        # not turn into a green analysis.
+        if: github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.user.login != 'dependabot[bot]'
+        continue-on-error: true
+        uses: github/codeql-action/upload-sarif@e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81 # v4.37.3
+        with:
+          sarif_file: sarif-results
+          category: /language:${{ matrix.language }}
 
       - name: Fail on actionable findings
         # Any result the chosen suite reports. The suite is where the noise
