@@ -168,13 +168,17 @@ network-capable path, names a display variable, names a privileged tool, or
 names a path outside this repository, and the refusal names the test and what
 it reached for. What it cannot see is printed beside its result.
 
-WHAT IS STILL NOT TRUE. Nothing runs that command on a pull request as a build
-and test check; #16 owes that, and until it lands the gate is something a
-contributor runs rather than something this board refuses a change over. Two
-other checks do run one leg each on every pull request, and neither is this
-one. And no run of this suite has been made on a machine that has no display
-and no network: what is enforced is that no test reads for one, which is a
-property of the source rather than a measurement of an environment.
+That command now runs on a pull request as a build and test check, landed by
+#16, so the headless leg is refused on the branch and not only on a
+contributor's machine. Two other checks run one leg each and neither is this
+one, so what carries this rule remotely is the whole-gate check rather than a
+workflow of its own.
+
+WHAT IS STILL NOT TRUE. No run of this suite has been made on a machine that has
+no display and no network. What is enforced is that no test reads for one,
+which is a property of the source rather than a measurement of an environment,
+and the check landing changes where that property is judged rather than what it
+is.
 
 ## Reasons
 

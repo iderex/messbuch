@@ -24,8 +24,7 @@ answers from it are recorded against the tag.
 
 ### 1. The gate is green on the commit being tagged, and the run is named
 
-Half answerable. The gate exists and the check that runs the whole of it on a
-pull request does not.
+Answerable, and the answer is a run rather than a document.
 
 #14 landed the single local command. It builds, tests and reads the tree, and it
 prints which of its own legs it did not run, so a green run is a statement about
@@ -33,15 +32,23 @@ a named set rather than about an assumed one:
 
     go run . ci
 
-Two checks run one leg of it each on every pull request, `Format and lint` and
-`No network outside the net package`. Nothing runs the whole command on a pull
-request; that is #16, and until it lands the rest of the gate is something a
-contributor runs rather than something this board refuses a change over.
+#16 landed `Build and test`, which invokes the whole of that command on every
+pull request, so every leg is now something this board refuses a change over
+rather than something a contributor runs. Two other checks run one leg each
+under their own name, `Format and lint` and `No network outside the net
+package`, and their value is that a red line under either says which property
+failed.
 
-When #16 lands, the answer to this item is the run rather than the workflow: a
-green run identified by its own id, on the exact commit being tagged, not on a
-branch tip that has moved since. `docs/required-checks.md` is where the check
-names are fixed.
+What answers this item at a tag is therefore a green `Build and test` run
+identified by its own id, on the exact commit being tagged, not on a branch tip
+that has moved since. `docs/required-checks.md` is where the check names are
+fixed and where the name is read off a real run rather than off the YAML.
+
+One thing this item does not yet get to claim. `Build and test` reports on every
+pull request and is outside the required set on the protected branch, so a red
+run of it does not block a merge today. That is item 2 and not this one, and it
+is named here because a green run whose redness would have changed nothing is a
+weaker statement than it looks.
 
 ### 2. The required check set is configured on the protected branch
 
@@ -53,9 +60,10 @@ everything that reports.
     DCO sign-off; dependency-review; Deterministic PR-hygiene checks; Reject Trojan Source Unicode; Audit workflows (zizmor)
 
 Five strings, and they are the five that were already reporting when the set was
-configured. `Format and lint` and `No network outside the net package` report on
-every pull request and are outside it, so a red run of either does not block a
-merge today. A release cut while a reporting check is optional is a release
+configured. `Format and lint`, `No network outside the net package` and `Build
+and test` report on every pull request and are outside it, so a red run of any
+of the three does not block a merge today. The third is the whole gate, so what
+is optional here is larger than the count of missing strings suggests. A release cut while a reporting check is optional is a release
 whose checks were optional, so this item is answered by the set covering
 everything `docs/required-checks.md` lists as reporting, not merely by the rule
 existing. That document holds the strings and names the two that must never be
