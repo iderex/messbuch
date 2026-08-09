@@ -381,10 +381,11 @@ func TestStructureLeavesAnUndecidableRequirementAlone(t *testing.T) {
 	}
 }
 
-// Every site in the catalogue is reached by a fixture in this file, and every
-// site a fixture reaches is in the catalogue. The accounting is at the id
-// level; the accounting per refusal SITE inside an id is #26 and is not
-// claimed here.
+// Every name in the catalogue is reached by a fixture in this file, and every
+// name a fixture reaches is in the catalogue. This is the accounting at the id
+// level, and it is the cheaper half: the gate's refusal-sites leg does the
+// same job per place in the source, which is what catches a second branch
+// added under a name that already has a fixture.
 func TestStructureEveryCatalogueSiteIsReachedByAFixture(t *testing.T) {
 	set := load(t)
 	reached := map[string]bool{}

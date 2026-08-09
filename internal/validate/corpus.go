@@ -89,13 +89,9 @@ func Corpus(root string, set *schema.Set) (*Report, error) {
 // its contents.
 func (r *Report) file(root, rel string, rule *schema.Schema, set *schema.Set) error {
 	if !rule.RecordPath.MatchString(rel) {
-		r.Refusals = append(r.Refusals, Refusal{
-			Site:  "record-in-the-wrong-place",
-			File:  rel,
-			Found: "a file at this path",
-			Expected: "a path matching " + rule.RecordPath.String() +
-				"; a record's identity is its path, so a file in the wrong place claims an identity nothing can read",
-		})
+		r.Refusals = append(r.Refusals, newRefusal("record-in-the-wrong-place", rel, "", "a file at this path",
+			"a path matching "+rule.RecordPath.String()+
+				"; a record's identity is its path, so a file in the wrong place claims an identity nothing can read"))
 		return nil
 	}
 	content, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(rel)))
