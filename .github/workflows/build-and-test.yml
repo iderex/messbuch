@@ -1,0 +1,79 @@
+# The build and test check (#16). This is the one workflow that runs the whole
+# local gate rather than a single leg of it, so that a green run here and a
+# green `go run . ci` on a contributor's machine are statements about one
+# procedure and not two.
+#
+# Why the whole command and not just the build and the tests. The failure this
+# guards against is a remote that checks a different set from the local one: a
+# contributor passes locally, pushes, and meets a red pull request naming a
+# step no document mentions. Running any subset here reintroduces that gap in
+# the other direction, where the gate is green on the branch and red on the
+# machine. The command decides what it covers and prints it, and this job takes
+# whatever that is.
+#
+# What that costs, stated rather than hidden. `Format and lint` and `No network
+# outside the net package` each run one leg of the same command under their own
+# name, so a formatting defect reds two checks and an import defect reds two
+# checks. The narrow name is the one that says WHICH property failed; this one
+# says whether the command a contributor runs is green. Reading a red here as a
+# build failure without opening the log is the mistake the duplication invites,
+# and the run prints the leg it stopped at as its last line.
+#
+# Warnings as errors, which the parity note left for this issue to decide. The
+# Go compiler refuses rather than warns, so there is no `--warnaserror` to set;
+# what stands in for it is `go vet`, inside the gate's format-and-lint leg, and
+# nothing further is added here. Adding a second analyser through this workflow
+# alone would be the two-procedures failure above: it would refuse on a pull
+# request something no local run refuses. A stricter tier belongs in the
+# command, where both routes reach it.
+#
+# The legs are not listed here. The run prints them, with what each one
+# examined and what it did not, and a copy in this file would drift against the
+# code that decides it.
+name: Build and test
+
+on:
+  # No branch filter, no path filter, no base filter. A check that reports on
+  # only some pull requests leaves the branch looking guarded when it is not,
+  # and a path filter would be the sharpest version of that here: the gate
+  # judges the tree rather than the files a pull request happens to touch.
+  pull_request:
+
+# Read-only. The job reads the checked-out tree and writes nothing anywhere.
+permissions:
+  contents: read
+
+concurrency:
+  group: build-and-test-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    # The literal check-run name a branch protection matches, fixed by #16 and
+    # recorded in docs/required-checks.md. Renaming it empties a required set
+    # without reporting anything, because the protection waits for a name that
+    # will never arrive and nothing distinguishes that from still-running.
+    name: Build and test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # No step pushes, so do not leave the token in .git/config.
+          persist-credentials: false
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          # The pin in go.mod and nothing else. A version written here would be
+          # a second pin, and the two would disagree on the day one moves. The
+          # gate's first leg then compares the running release against that
+          # same pin, so a setup that installed something else reds this job
+          # rather than passing under a version nobody chose.
+          go-version-file: go.mod
+
+      # No cache. Restoring one would make the dependency set this job builds
+      # against a function of a previous run rather than of go.sum, and the
+      # modules leg exists to decide exactly that question from the lockfile.
+      - name: Run the whole local gate, the same command a contributor runs
+        run: go run . ci

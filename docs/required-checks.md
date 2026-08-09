@@ -21,9 +21,10 @@ checks. It requires no approving review.
     ["DCO sign-off","dependency-review","Deterministic PR-hygiene checks","Reject Trojan Source Unicode","Audit workflows (zizmor)"]
 
 So a check outside that list can be red and the merge button still works. That
-is where `No network outside the net package` stands: it reports on every pull
-request and refuses nothing on the branch until the string is added to the set
-above.
+is where `No network outside the net package`, `Format and lint` and `Build and
+test` stand: each reports on every pull request and refuses nothing on the
+branch until its string is added to the set above. `Build and test` runs the
+whole local gate, so the widest of the three is the one with the least force.
 
 Run those commands rather than trusting the output pasted above. The output is
 what they printed on 2026-08-09. The output this section carried before was
@@ -73,6 +74,7 @@ stated, because a count in a sentence drifts against the table under it.
 | `Deterministic PR-hygiene checks` | `.github/workflows/pr-hygiene.yml` | A pull request body naming no issue, and a commit message carrying a byte outside printable ASCII plus line feed and horizontal tab. Fails closed if the commit range cannot be walked, and refuses before reading the pull request at all if its own fixtures do not behave as it claims. | Yes. Triggered on `pull_request` with types `opened`, `synchronize`, `reopened` and `edited`, and no branch or path filter. |
 | `No network outside the net package` | `.github/workflows/no-network-imports.yml` | A package other than `internal/net` and its own dependencies transitively reaching a network-capable import path, test files included. Fails closed: a tree whose import graph cannot be computed, and a module whose package set comes back empty, are both refusals. | Yes. Triggered on `pull_request` with the default types and no branch, path or base filter. |
 | `Format and lint` | `.github/workflows/format-and-lint.yml` | Go source that is not what gofmt writes, a tracked Markdown, YAML or TOML file carrying trailing whitespace or no final newline, and anything `go vet` objects to. Fails closed: a tree whose files cannot be walked, and a tree carrying no source and no prose at all, are both refusals. | Yes. Triggered on `pull_request` with the default types and no branch, path or base filter. |
+| `Build and test` | `.github/workflows/build-and-test.yml` | Whatever any leg of `go run . ci` refuses, because it invokes the whole command rather than one leg. Today that is the toolchain pin against the running release, the module set against `go.sum` in locked mode, the build, the tests, the headless rule, the corpus decode, the formatting and lint, and the offline boundary. The run prints its own covered set and the leg it stopped at. | Yes. Triggered on `pull_request` with the default types and no branch, path or base filter. |
 
 `Deterministic PR-hygiene checks` has a property anyone requiring it needs to
 know, and it is deliberate rather than a defect. It refuses only where the head
@@ -104,6 +106,21 @@ style, a line length or a spelling, its lint half is `go vet` and nothing else,
 and `LICENSE` and `DCO` are read by neither half because their bytes are copies
 of texts this project may not normalise.
 
+`Build and test` is the only one of these that reports on the whole command
+rather than on one leg of it, and that has a consequence worth knowing before
+requiring it. A formatting defect reds it and reds `Format and lint`, and an
+import defect reds it and reds `No network outside the net package`. The narrow
+strings are the ones that say which property failed. This one says whether the
+command a contributor runs is green, which is the property that stops the
+remote half of the gate from checking a different set from the local half.
+
+Its column above says what it refuses today rather than for all time, and the
+run is the authority rather than the row. A leg added to the command widens
+this check with no change to this file and no change to the workflow, which is
+the point of one command and is also how this row goes stale:
+
+    go run . ci
+
 `No network outside the net package` carries its own limits and they are
 printed beside its result on every run rather than only here. It refuses a
 package that can reach a socket through the import graph. It does not refuse a
@@ -130,7 +147,6 @@ above with extra steps.
 
 | Matching string | Built by issue | What it will refuse |
 | --- | --- | --- |
-| `Build and test` | #16 | A pull request that does not build, or whose tests fail, or that produces a warning, run through the same single command a contributor runs locally. |
 | `Validate the corpus` | #24 | A record file that is not a well formed record: a parse failure, an unknown field, a missing required field, a wrong type, a value outside a closed set, a duplicate identifier, or a file in the wrong place for what it claims to be. |
 | not yet fixed | #18 | Static analysis of the source, reporting into the code scanning tab. The issue fixes the job name as `Analyze` extended with the language where the analysis distinguishes languages, so the exact string is not knowable until the language decision lands. |
 
@@ -189,6 +205,33 @@ exist before the sentence quoting it can be written. Naming the commit the
 command was actually run against is the point; running it against an older
 commit and reading the result as a statement about the table as it stands today
 would be the defect this section exists to prevent.
+
+`Build and test` is confirmed the same way, against
+`bc5615d280e16fc766b377505363b186adbed176`, the head of the pull request that
+added it:
+
+    [{"app":"github-actions","conclusion":"success","name":"Audit workflows (zizmor)"},
+     {"app":"github-actions","conclusion":"success","name":"Build and test"},
+     {"app":"github-actions","conclusion":"success","name":"DCO sign-off"},
+     {"app":"github-actions","conclusion":"success","name":"Deterministic PR-hygiene checks"},
+     {"app":"github-actions","conclusion":"success","name":"Format and lint"},
+     {"app":"github-actions","conclusion":"success","name":"No network outside the net package"},
+     {"app":"github-actions","conclusion":"success","name":"Reject Trojan Source Unicode"},
+     {"app":"github-actions","conclusion":"success","name":"Reject Trojan Source Unicode"},
+     {"app":"github-actions","conclusion":"success","name":"dependency-review"},
+     {"app":"github-advanced-security","conclusion":"success","name":"zizmor"}]
+
+That output also confirms `Format and lint`, which landed between the two runs
+above and had not been read off a run until here.
+
+A green line is half of what a required string needs. The other half is that
+the name goes red when the property fails, and for `Build and test` that was
+watched on `d06e44c0d6a84488fb281d40968f83140680980e`, a branch carrying a test
+that fails on purpose and which is never merged:
+
+    gh api repos/iderex/messbuch/commits/d06e44c0d6a84488fb281d40968f83140680980e/check-runs \
+      --jq '[.check_runs[] | select(.name=="Build and test") | {name, app: .app.slug, conclusion}]'
+    [{"name":"Build and test","app":"github-actions","conclusion":"failure"}]
 
 The older output also shows two things the table did not predict, and both are
 the sort of thing that turns a required check into a deadlock.

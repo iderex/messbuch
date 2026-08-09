@@ -91,8 +91,8 @@ is adopted as it stands and carries one line wherever this board deviates.
 | Leg | Where it is on the sso board | Verdict | Lands here | Reasoning for the deviation |
 | --- | --- | --- | --- | --- |
 | Locked dependency restore, where a resolution differing from the committed pins fails rather than resolving quietly | `dotnet.yml`, in the `build` job: `dotnet restore --locked-mode` | Adopted | #14 for the lockfile and the restore, #53 for the pinning rule across dependencies and actions | |
-| Build with warnings as errors | `dotnet.yml`, in the `build` job: `dotnet build --no-restore --warnaserror` | Adopted | #16, through the single command #14 creates | |
-| The test suite | `dotnet.yml`, in the `build` job: `dotnet test --no-build --verbosity normal` | Adopted | #15 for the harness, #16 for the check that runs it | |
+| Build with warnings as errors | `dotnet.yml`, in the `build` job: `dotnet build --no-restore --warnaserror` | Adapted, and in place | In place, landed by #16 as `.github/workflows/build-and-test.yml`, running the single command #14 created | The Go compiler refuses rather than warns, so there is no flag with this spelling. What stands in for it is `go vet`, inside the command's format-and-lint leg, and #16 added nothing further: a stricter analyser reachable only from a workflow would refuse on a pull request what no local run refuses |
+| The test suite | `dotnet.yml`, in the `build` job: `dotnet test --no-build --verbosity normal` | Adopted, and in place | In place, the harness landed by #15 and the check that runs it by #16 | |
 | A coverage bar on the surface that decides refusals, failing closed on an unreadable or empty report | `dotnet.yml`, the `Enforce the security-surface coverage bar` step, which runs `scripts/check-coverage.py` over a Cobertura report | Adapted | #50 | There the surface is the code that authorises a login; here it is the validator's refusal paths and the estimators, because the equivalent of letting the wrong person in is admitting a wrong number or computing one |
 | A formatter check that reports rather than applies | `prettier.yml`, job id `prettier` with no `name:` | Adopted, with the repair command in the same code path | In place, landed by #17 as `.github/workflows/format-and-lint.yml` | The check and the fix are one function here rather than two tools that agree until they do not, so `go run . fmt` writes exactly what the check demands. The prose half is trailing whitespace and a final newline rather than a prose formatter, because a Markdown formatter would add a runtime this tree does not carry, and the line-ending question is settled in `.gitattributes` rather than in a formatter setting |
 | Static analysis of the source, reporting into the code scanning tab | `codeql.yml`, contexts `CodeQL` and `Analyze (csharp)` | Adopted | #18 | |
@@ -161,6 +161,7 @@ all, and is listed separately below for that reason.
 In place today, all reporting on every pull request:
 
     git ls-files .github/workflows/
+    .github/workflows/build-and-test.yml
     .github/workflows/dco.yml
     .github/workflows/dependency-review.yml
     .github/workflows/format-and-lint.yml
@@ -170,13 +171,13 @@ In place today, all reporting on every pull request:
     .github/workflows/unicode-guard.yml
     .github/workflows/zizmor.yml
 
-Run on the branch that lands the formatter check. Before it, that list is the
-same without `format-and-lint.yml`.
+Run on the branch that lands the build and test check. Before it, that list is
+the same without `build-and-test.yml`.
 
-That is the sign off check, dependency review, the formatter check, the pull
-request hygiene check, the unicode guard, the workflow audit and the invariants
-leg. `scorecard.yml` is not a gate leg and `docs/required-checks.md` says why it
-must never be required.
+That is the build and test check, the sign off check, dependency review, the
+formatter check, the pull request hygiene check, the unicode guard, the
+workflow audit and the invariants leg. `scorecard.yml` is not a gate leg and
+`docs/required-checks.md` says why it must never be required.
 
 Not in place as a check on a pull request, and no longer waiting on the source
 tree or the dependency manifest they read, because both now exist:
@@ -184,27 +185,31 @@ tree or the dependency manifest they read, because both now exist:
     git ls-files | grep -cE '\.go$|go\.mod|go\.sum'
     11
 
-The locked restore, the build with warnings as errors, the test suite, the
-coverage bar, the static analysis and the format compatibility check are all in
-that state. The first of them to land was the toolchain pin and the single
-command, #14, and the rest wrap or read what it creates.
+The coverage bar, the static analysis and the format compatibility check are
+what is left in that state. The first to land was the toolchain pin and the
+single command, #14, and the rest wrap or read what it creates. The locked
+restore, the build with warnings as errors and the test suite came off this
+list with #16, which runs the whole of that command on every pull request, so
+each of the three is now a leg the board refuses a change over rather than one
+a contributor runs.
 
-Two of those six now exist inside that command rather than merely being
-startable. The locked restore is its `modules` leg, which runs `go mod verify`
-against `go.sum` with `-mod=readonly` set, so a build cannot quietly rewrite the
-pins to make itself work. The build is its `build` leg. Warnings as errors has
-no direct spelling in this toolchain, since the Go compiler refuses rather than
-warns; what stands in for it is the `format-and-lint` leg's `go vet`, and
-whether #16 wants more than that is #16's to decide.
+How each of the three that came off the list is spelled here. The locked
+restore is the command's `modules` leg, which runs `go mod verify` against
+`go.sum` with `-mod=readonly` set, so a build cannot quietly rewrite the pins to
+make itself work. The build is its `build` leg and the suite is its `test` leg.
+Warnings as errors has no direct spelling in this toolchain, since the Go
+compiler refuses rather than warns; what stands in for it is the
+`format-and-lint` leg's `go vet`, and #16 decided to add nothing beyond it.
 
-Two legs of that command run on a pull request and the rest do not, and the
-distinction is the whole subject of this section. `no-network-imports.yml` and
-`format-and-lint.yml` each invoke the single leg they report under, so the
-offline boundary and the formatting are things this board refuses a change
-over. Everything else in the command is still something a contributor runs,
-until #16 wraps the whole of it. The command prints which of its own legs it
-did not run, and that output is the authority for the covered set rather than
-this document:
+Every leg of that command now runs on a pull request, which is what changed
+here. `no-network-imports.yml` and `format-and-lint.yml` each invoke the single
+leg they report under, so a red line under either names the property that
+failed. `build-and-test.yml` invokes the command whole, so a leg with no
+workflow of its own is still refused. The price is that a formatting defect
+reds two checks and an import defect reds two checks, which is deliberate and
+is argued in `docs/required-checks.md`. The command prints which of its own
+legs it did not run, and that output is the authority for the covered set
+rather than this document:
 
     go run . ci
 
