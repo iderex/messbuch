@@ -237,7 +237,7 @@ func TestFormatLegTreeWithNothingToFormatIsARefusal(t *testing.T) {
 
 // The tree this repository actually is. A leg green only on its own fixtures
 // says nothing about the mainline.
-func TestFormatLegThisRepositoryIsFormattedAsWritten(t *testing.T) {
+func TestTheTreeIsFormattedAsWritten(t *testing.T) {
 	examined, err := formatAndLintLeg("../..")
 	if err != nil {
 		t.Fatalf("this repository is not formatted as it writes: %v", err)

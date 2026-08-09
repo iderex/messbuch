@@ -129,7 +129,7 @@ func TestNetImportsPathsThatOnlyLookCapableAreNotInTheTable(t *testing.T) {
 
 // The tree this repository actually is. A leg that passes only its own
 // fixtures says nothing about the mainline.
-func TestNetImportsThisRepositoryHasNone(t *testing.T) {
+func TestTheTreeReachesNoNetworkCapableImport(t *testing.T) {
 	examined, err := noNetworkImportsLeg("../..")
 	if err != nil {
 		t.Fatalf("this repository reaches a network-capable API: %v", err)
