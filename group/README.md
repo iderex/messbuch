@@ -162,18 +162,21 @@ it did not name.
 
 ## What checks any of this
 
-Nothing.
+One thing, and it is the narrowest of them.
 
-No check in this repository reads this file, resolves a `group.id` against this
-directory, refuses a duplicate entry, refuses an identifier that breaks the
-syntax above, or refuses an entry naming a person. The validator that would do
-the resolving is owed by #25, and there is no validator, no module and no
-source in this repository today:
+The structural leg of the gate refuses a `group.id` on a record whose text
+breaks the identifier syntax above, because the schema types that field as an
+identifier and the leg applies the schema:
 
-    git ls-files | grep -E '\.go$|go\.mod'
-    (no output, exit 1)
+    go run . ci validate-corpus
 
-So every rule on this page is held by a person reading it. Saying so is not a
-formality: a curator who believes a machine is watching the identifier syntax
-stops watching it, and the first duplicate group entry is invisible until an
-analysis pools two halves of one experiment as though they were two.
+That is the whole of it. Nothing reads this file, resolves a `group.id` against
+this directory, refuses a duplicate entry, refuses an entry whose `id` and file
+name disagree, or refuses an entry naming a person. Resolving an identifier
+means opening a second file to decide the first, which is exactly what the
+structural leg does not do, and it is owed by #25.
+
+So every rule on this page except the syntax is held by a person reading it.
+Saying so is not a formality: a curator who believes a machine is watching stops
+watching, and the first duplicate group entry is invisible until an analysis
+pools two halves of one experiment as though they were two.

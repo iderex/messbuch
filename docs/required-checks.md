@@ -22,10 +22,10 @@ checks. It requires no approving review.
 
 So a check outside that list can be red and the merge button still works. That
 is where `No network outside the net package`, `Format and lint`, `Build and
-test` and `Analyze (go)` stand: each reports on every pull request and refuses
-nothing on the branch until its string is added to the set above. `Build and
-test` runs the whole local gate, so the widest of the four is the one with the
-least force.
+test`, `Analyze (go)` and `Validate the corpus` stand: each reports on every
+pull request and refuses nothing on the branch until its string is added to the
+set above. `Build and test` runs the whole local gate, so the widest of the five
+is the one with the least force.
 
 Run those commands rather than trusting the output pasted above. The output is
 what they printed on 2026-08-09. The output this section carried before was
@@ -76,6 +76,7 @@ stated, because a count in a sentence drifts against the table under it.
 | `No network outside the net package` | `.github/workflows/no-network-imports.yml` | A package other than `internal/net` and its own dependencies transitively reaching a network-capable import path, test files included. Fails closed: a tree whose import graph cannot be computed, and a module whose package set comes back empty, are both refusals. | Yes. Triggered on `pull_request` with the default types and no branch, path or base filter. |
 | `Format and lint` | `.github/workflows/format-and-lint.yml` | Go source that is not what gofmt writes, a tracked Markdown, YAML or TOML file carrying trailing whitespace or no final newline, and anything `go vet` objects to. Fails closed: a tree whose files cannot be walked, and a tree carrying no source and no prose at all, are both refusals. | Yes. Triggered on `pull_request` with the default types and no branch, path or base filter. |
 | `Analyze (go)` | `.github/workflows/codeql.yml` | Any result the CodeQL `security-extended` suite reports over the Go source, under the local threat model, so command-line arguments, environment variables and file contents count as untrusted input. Fails closed: no SARIF, or one that will not parse, is a refusal rather than a clean tree. The refusal does not depend on the upload to the code-scanning tab, which is a separate step allowed to fail. | Yes. Triggered on `pull_request` with the default types and no branch, path or base filter. The gate step has no condition, so a fork or Dependabot pull request is refused on a finding even though its upload is skipped. |
+| `Validate the corpus` | `.github/workflows/validate-corpus.yml` | A file under `record/` that is not a well formed record against the schema version it names: a parse failure, a path that is not a record's path, an unknown or misspelled field, a missing required field, a field another field's value requires or forbids, a wrong type, a value outside a closed set, a list below its minimum, a number below its minimum, the same entry twice in one list, and a block carrying none of the members it must carry one of. The list is printed by `go run . refusals` rather than kept current here. Fails closed: a schema set it cannot read and a record directory it cannot walk are both refusals rather than a clean corpus. | Yes. Triggered on `pull_request` with the default types and no branch, path or base filter. |
 | `Build and test` | `.github/workflows/build-and-test.yml` | Whatever any leg of `go run . ci` refuses, because it invokes the whole command rather than one leg. Today that is the toolchain pin against the running release, the module set against `go.sum` in locked mode, the build, the tests, the headless rule, the corpus decode, the formatting and lint, and the offline boundary. The run prints its own covered set and the leg it stopped at. | Yes. Triggered on `pull_request` with the default types and no branch, path or base filter. |
 
 `Deterministic PR-hygiene checks` has a property anyone requiring it needs to
@@ -133,6 +134,23 @@ from the table it reads. `docs/decisions/0009-offline-by-default.md` is where
 that boundary was argued and why an assurance with an unstated edge is worse in
 an audit than a narrower one that says where it stops.
 
+`Validate the corpus` answers the structural question and no other, and the
+distinction is worth knowing before requiring it. It reads one file at a time
+against `schema/record-<n>.toml` and never opens a second file to decide the
+first, so a quantity naming no vocabulary entry, a group identifier resolving to
+no registry file, a supersession pointing at a record that does not exist and a
+conversion factor that is the wrong number all pass it. Those belong to the
+meaning leg, which is #25 and is not built. Its own limits print beside its
+result on every run, and what it can refuse is printed rather than restated
+anywhere:
+
+    go run . refusals
+
+It is also the check whose subject can be empty. There is no record in this
+repository yet, so the leg reports the count it read, and a count of zero is
+what it prints rather than a green line that reads like a corpus somebody
+checked.
+
 ## Must not be required
 
 | Matching string | Workflow file | Why not |
@@ -150,7 +168,11 @@ above with extra steps.
 
 | Matching string | Built by issue | What it will refuse |
 | --- | --- | --- |
-| `Validate the corpus` | #24 | A record file that is not a well formed record: a parse failure, an unknown field, a missing required field, a wrong type, a value outside a closed set, a duplicate identifier, or a file in the wrong place for what it claims to be. |
+
+The table is empty. `Validate the corpus` was its only row and it landed under
+#24; its row is in the table above with the rest. An empty table here is not a
+statement that nothing further is coming, only that no check with a fixed
+string is waiting to be built today.
 
 When one of these lands, the pull request that lands it fills in its row here.
 A check that exists and is not in this table is a check the maintainer will not

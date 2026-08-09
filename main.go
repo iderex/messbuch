@@ -68,6 +68,14 @@ func main() {
 			fmt.Println(name)
 		}
 		fmt.Printf("\n%d file(s) rewritten.\n", len(changed))
+	case "refusals":
+		// The list lives in the code that produces it and is printed rather
+		// than written down, because a list of refusals in a document drifts
+		// against the validator and the drift is invisible: a reader trusts
+		// the document exactly where it has stopped being true.
+		for _, site := range gate.Sites() {
+			fmt.Printf("%-26s %s\n", site.ID, site.Refuses)
+		}
 	case "help", "-h", "--help":
 		usage(os.Stdout)
 	default:
@@ -83,6 +91,7 @@ func usage(w *os.File) {
 	go run . ci         run the local gate
 	go run . ci <leg>   run one leg of it, named by the id the run prints
 	go run . fmt        write the bytes the format-and-lint leg demands
+	go run . refusals   print every refusal the corpus validator can produce
 	go run . help       print this
 
 The gate prints its own legs, in the order it runs them, with what each one
