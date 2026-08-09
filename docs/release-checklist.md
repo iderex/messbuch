@@ -24,29 +24,42 @@ answers from it are recorded against the tag.
 
 ### 1. The gate is green on the commit being tagged, and the run is named
 
-Not answerable yet. There is no gate.
+Half answerable. The gate exists and the check that runs the whole of it on a
+pull request does not.
 
-The single local command is owed by #14 and the workflow wrapping it by #16.
-Until both land, nothing here builds or tests anything, and the five workflows
-that do run read commit trailers, dependency manifests, Unicode and the workflow
-files.
+#14 landed the single local command. It builds, tests and reads the tree, and it
+prints which of its own legs it did not run, so a green run is a statement about
+a named set rather than about an assumed one:
 
-When it lands, the answer is the run rather than the workflow: a green run
-identified by its own id, on the exact commit being tagged, not on a branch tip
-that has moved since. `docs/required-checks.md` is where the check names are
-fixed.
+    go run . ci
+
+Two checks run one leg of it each on every pull request, `Format and lint` and
+`No network outside the net package`. Nothing runs the whole command on a pull
+request; that is #16, and until it lands the rest of the gate is something a
+contributor runs rather than something this board refuses a change over.
+
+When #16 lands, the answer to this item is the run rather than the workflow: a
+green run identified by its own id, on the exact commit being tagged, not on a
+branch tip that has moved since. `docs/required-checks.md` is where the check
+names are fixed.
 
 ### 2. The required check set is configured on the protected branch
 
-Answerable now, and the answer today is that it is not.
+Answerable now, and the answer is that it is configured and does not yet cover
+everything that reports.
 
-    gh api repos/iderex/messbuch/rules/branches/main --jq '[.[].type] | join(" ")'
-    deletion non_fast_forward pull_request
+    gh api repos/iderex/messbuch/rules/branches/main       --jq '.[] | select(.type=="required_status_checks")
+            | [.parameters.required_status_checks[].context] | join("; ")'
+    DCO sign-off; dependency-review; Deterministic PR-hygiene checks; Reject Trojan Source Unicode; Audit workflows (zizmor)
 
-No `required_status_checks` rule, so every check on this board reports without
-blocking anything. Until that changes, the gate is advice, and a release cut
-against advice is a release whose checks were optional. `docs/required-checks.md`
-holds the strings to require and names the two that must never be required.
+Five strings, and they are the five that were already reporting when the set was
+configured. `Format and lint` and `No network outside the net package` report on
+every pull request and are outside it, so a red run of either does not block a
+merge today. A release cut while a reporting check is optional is a release
+whose checks were optional, so this item is answered by the set covering
+everything `docs/required-checks.md` lists as reporting, not merely by the rule
+existing. That document holds the strings and names the two that must never be
+required.
 
 ### 3. Every decision the release depends on has its record
 
