@@ -283,9 +283,11 @@ claim untested. Naming the split, and naming which half is a merge gate, is
 what keeps the weaker half from being mistaken for the stronger one.
 
 Nothing in this repository refuses any of this. `PROSE, NOT ENFORCEMENT`.
-There is no schema file, no validator and no online harness here today, and
-the repository's checks read workflow files, dependency manifests, commit
-trailers and Unicode. Every refusal listed under the validator above is a
+The source, locator, statement-kind, directness and confirmation shapes above
+are written into `schema/record-1.toml` and nothing reads that file. There is no
+validator. The harness that would resolve an identifier exists, at `test/online/`
+behind the `online` build constraint, and it registers no test that resolves
+anything. Every refusal listed under the validator above is a
 refusal that is owed: the structural half is #24, the meaning half is #25, and
 the fixture behind each refusal is #26. Until they land, a record naming no
 source at all passes every route in this repository, and the field list above
