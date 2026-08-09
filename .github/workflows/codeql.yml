@@ -1,0 +1,128 @@
+# Static analysis of the source (#18). The workflow audit already in this tree
+# reads the workflow files and nothing else; this reads the Go that will parse
+# files arriving by pull request from people nobody has met, and that will read
+# a corpus a user may have assembled anywhere.
+#
+# The defect class this is for is named in the issue rather than invented here:
+# a parser that can be made to allocate without bound, recurse without bound or
+# read outside its input. Those are the ones a taint-tracking analyser finds and
+# a reviewer reading a diff does not.
+#
+# Go only, and the omission is deliberate. This analyser also understands the
+# workflow files, and `zizmor.yml` already gates on those under its own name. A
+# second verdict on one subject, reported under a second name, teaches a reader
+# that neither name means anything in particular, and it doubles the triage for
+# one property.
+#
+# The query suite is `security-extended`, which is the security set plus the
+# lower-precision members of it. The high-precision default is the right choice
+# on a large codebase where the extra findings are a review budget nobody has.
+# This tree is small and its whole security surface is one parser reading
+# untrusted input, so the trade runs the other way and the extra findings are
+# affordable. Findings are triaged rather than silenced: one that is not a
+# defect gets a dismissal with a written reason beside it, so a later reader can
+# tell an accepted risk from an unread one.
+#
+# Failing on a finding is the gate step at the bottom rather than a property of
+# the analysis step. `analyze` uploads and exits zero whatever it found, so a
+# workflow without that step reports green on a pull request that introduced an
+# alert. This is the same shape `zizmor.yml` uses and for the same reason.
+name: Static analysis
+
+on:
+  # No branch filter, no path filter, no base filter. A check that reports on
+  # only some pull requests leaves the branch looking guarded when it is not.
+  # A path filter would be the sharper version of that mistake here, because
+  # taint reaches a parser from a caller in a file the pull request did not
+  # touch.
+  pull_request:
+
+# Explicit deny-all at workflow level; the job below grants only what it needs.
+permissions: {}
+
+concurrency:
+  group: codeql-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    # The literal check-run name a branch protection matches, fixed by #18 as
+    # `Analyze` extended with the language, and recorded in
+    # docs/required-checks.md. It is written out of the matrix, so adding a
+    # second language adds a second string rather than renaming this one.
+    name: Analyze (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    permissions:
+      security-events: write # upload the SARIF into the code-scanning tab
+      contents: read # checkout the source to analyse
+
+    strategy:
+      # One language today, and no early exit if a second is ever added: a
+      # failure in one analysis must not cancel the other and leave a check
+      # that reported nothing.
+      fail-fast: false
+      matrix:
+        language: [go]
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # No step pushes, so do not leave the token in .git/config.
+          persist-credentials: false
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          # The pin in go.mod and nothing else. The analyser builds the tree to
+          # extract it, and a build under a different release is an analysis of
+          # something no other route compiles.
+          go-version-file: go.mod
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81 # v4.37.3
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: autobuild
+          queries: security-extended
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81 # v4.37.3
+        with:
+          category: /language:${{ matrix.language }}
+          # Written to disk as well as uploaded, so the gate step below decides
+          # on the same bytes the code-scanning tab received rather than on a
+          # second query of an API that may not have ingested them yet.
+          output: sarif-results
+          upload: always
+
+      - name: Fail on actionable findings
+        # Any result the chosen suite reports. The suite is where the noise
+        # decision was taken, in the header of this file; a second threshold
+        # here would be that decision taken twice, in two places that drift.
+        #
+        # Fails closed. No SARIF file, or a SARIF file that will not parse, is
+        # a refusal rather than a clean tree, because an analysis whose output
+        # nobody could read examined nothing as far as this job can tell.
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          files=(sarif-results/*.sarif)
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "::error::No SARIF was produced, so this job examined nothing. Refusing rather than reporting a clean tree."
+            exit 1
+          fi
+          total=0
+          for f in "${files[@]}"; do
+            n=$(jq '[.runs[].results // [] | length] | add // 0' "$f")
+            echo "${f}: ${n} result(s)"
+            total=$((total + n))
+          done
+          if [ "$total" -gt 0 ]; then
+            echo "::error::${total} actionable finding(s). Each is in the code-scanning tab with its path and query. A finding that is not a defect is dismissed there with a written reason, never removed from the suite."
+            for f in "${files[@]}"; do
+              jq -r '.runs[].results[]? | "\(.ruleId)\t\(.locations[0].physicalLocation.artifactLocation.uri):\(.locations[0].physicalLocation.region.startLine)\t\(.message.text)"' "$f"
+            done
+            exit 1
+          fi
+          echo "${#files[@]} SARIF file(s) read and no result in any of them."
