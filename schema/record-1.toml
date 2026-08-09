@@ -1,0 +1,842 @@
+# The machine readable schema for a measurement record, version 1.
+#
+# This file is the single authority for what a record may contain. The decision
+# records under docs/decisions/ are where each field was argued; this is where
+# the argument's outcome is written in a form a program reads. Where a program
+# needs to know a field's name, type, presence rule or value set, it reads this
+# file. Nothing restates it.
+#
+# It is data rather than prose. Every entry below is one field, addressed by its
+# TOML path inside a record file. The shape of an entry, the presence vocabulary
+# and the versioning rule are in schema/README.md.
+#
+# Read the value sets here rather than in any document. Where a document and
+# this file disagree, this file is what a validator obeys, and the document is a
+# defect.
+
+schema_version = 1
+fixed_on = "2026-08-09"
+
+# The identity of a record is its path, not a field: record/<quantity-id>/<year>-
+# <first-author-slug>-<nn>.toml, fixed by docs/decisions/0003-storage-format.md.
+# No field repeats it, which is why there is no id field below.
+record_path_pattern = '^record/[a-z][a-z0-9-]{0,59}/[0-9]{4}-[a-z][a-z-]*-[0-9]{2}\.toml$'
+
+# A directory under record/ whose name begins with an underscore is not a
+# quantity and is excluded from the build, per 0003. The pattern above cannot
+# match one, and that agreement is deliberate rather than incidental.
+excluded_directory_prefix = "_"
+
+# An identifier: a quantity id, a technique id, a group id or a definition-epoch
+# id. One syntax for all four, fixed by docs/decisions/0006-quantity-identity.md.
+identifier_pattern = '^[a-z][a-z0-9]*(-[a-z0-9]+)*$'
+identifier_max_length = 60
+
+# Coverage, wherever it appears. Fixed by docs/decisions/0005-uncertainty.md.
+coverage_pattern = '^(k=[0-9]+(\.[0-9]+)?|cl=[0-9]{1,2}(\.[0-9]+)?|cl=100|unstated|other)$'
+
+# ---------------------------------------------------------------------------
+# Top-level fields
+# ---------------------------------------------------------------------------
+
+[[field]]
+path = "schema_version"
+type = "integer"
+presence = "required"
+means = "Which version of this field set the record was written against."
+does_not_mean = "The corpus version, which is a property of a release and not of a record."
+fixed_by = "docs/decisions/0004-record-schema.md"
+needed_by = ["#61", "#28"]
+structural = true
+
+[[field]]
+path = "status"
+type = "string"
+presence = "required"
+values = ["active", "withdrawn"]
+means = "Whether this record is part of the corpus as a live statement."
+does_not_mean = "That the record is correct; a corrected value is active with a correction entry."
+fixed_by = "docs/decisions/0012-where-correction-history-lives.md"
+needed_by = ["#38", "#48"]
+structural = true
+
+[[field]]
+path = "superseded_by"
+type = "record-path"
+presence = "conditional"
+required_when = { field = "status", equals = "withdrawn", and_note = "a replacement record exists" }
+refused_when = { field = "status", equals = "active" }
+machine_decidable = false
+condition_note = "Whether a replacement exists is not readable from this record, so a validator can refuse this field on an active record and cannot require it on a withdrawn one."
+means = "The record a consumer holding a citation to this withdrawn one should read instead."
+does_not_mean = "That a later publication improved on it, which is lineage.superseded_by."
+fixed_by = "docs/decisions/0004-record-schema.md"
+needed_by = ["#48"]
+
+[[field]]
+path = "blinding"
+type = "string"
+presence = "required"
+values = ["blinded", "not-blinded", "not-stated"]
+means = "Whether the source says its analysis was blinded to the expected answer."
+does_not_mean = "That the analysis was or was not blinded in fact; not-stated is a statement about the paper."
+fixed_by = "docs/decisions/0004-record-schema.md"
+needed_by = ["#45", "#46"]
+absence_is_written = true
+
+# ---------------------------------------------------------------------------
+# measurement
+# ---------------------------------------------------------------------------
+
+[[field]]
+path = "measurement.quantity"
+type = "identifier"
+presence = "required"
+resolves_to = "vocabulary/<value>.toml"
+means = "Which vocabulary entry's definition this value is a value of."
+does_not_mean = "The technique, which is method.technique, or the field of study."
+fixed_by = "docs/decisions/0006-quantity-identity.md"
+needed_by = ["#38"]
+
+[[field]]
+path = "measurement.published.value"
+type = "float"
+presence = "conditional"
+required_when = { field = "measurement.published.limit", absent = true }
+refused_when = { field = "measurement.published.limit", present = true }
+means = "The value as the source printed it, in the source's own unit."
+does_not_mean = "The comparable number, which is measurement.normalized.value."
+fixed_by = "docs/decisions/0004-record-schema.md"
+needed_by = ["#38"]
+
+[[field]]
+path = "measurement.published.unit"
+type = "string"
+presence = "required"
+means = "The unit as the source printed it."
+fixed_by = "docs/decisions/0004-record-schema.md"
+needed_by = ["#38"]
+
+[[field]]
+path = "measurement.published.uncertainty_status"
+type = "string"
+presence = "required"
+values = ["reported", "none-in-source", "not-transcribed"]
+means = "Whether the source printed an uncertainty, printed none, or has not been read yet."
+does_not_mean = "That the uncertainty is zero; none-in-source is a fact about the publication."
+fixed_by = "docs/decisions/0005-uncertainty.md"
+needed_by = ["#38", "#39", "#45"]
+absence_is_written = true
+
+[[field]]
+path = "measurement.published.uncertainty"
+type = "list<uncertainty-component>"
+presence = "conditional"
+required_when = { field = "measurement.published.uncertainty_status", equals = "reported" }
+refused_when = { field = "measurement.published.uncertainty_status", in = ["none-in-source", "not-transcribed"] }
+min_length = 1
+means = "The uncertainty as the source printed it, one entry per component the source separated."
+does_not_mean = "A combined number; nothing is combined on the way in."
+fixed_by = "docs/decisions/0005-uncertainty.md"
+needed_by = ["#38", "#39", "#40", "#45"]
+
+[[field]]
+path = "measurement.published.limit"
+type = "limit"
+presence = "conditional"
+required_when = { field = "measurement.published.value", absent = true }
+refused_when = { field = "measurement.published.value", present = true }
+means = "The source reported a bound rather than a value."
+does_not_mean = "That the measurement failed."
+fixed_by = "docs/decisions/0005-uncertainty.md"
+needed_by = ["#42", "#38", "#48"]
+
+[[field]]
+path = "measurement.normalization_status"
+type = "string"
+presence = "required"
+values = ["normalized", "not-convertible-across-redefinition"]
+means = "Whether a comparable number exists for this record."
+fixed_by = "docs/decisions/0007-units.md"
+needed_by = ["#38", "#42"]
+
+[[field]]
+path = "measurement.normalized"
+type = "normalized-block"
+presence = "conditional"
+required_when = { field = "measurement.normalization_status", equals = "normalized" }
+refused_when = { field = "measurement.normalization_status", equals = "not-convertible-across-redefinition" }
+means = "The same measurement expressed in the quantity's canonical unit."
+does_not_mean = "A better number; where the two differ in precision the published one is the fact."
+fixed_by = "docs/decisions/0007-units.md"
+needed_by = ["#38"]
+
+[[field]]
+path = "measurement.conversion"
+type = "conversion-block"
+presence = "conditional"
+required_when = { field = "measurement.normalized", present = true }
+refused_when = { field = "measurement.normalized", absent = true }
+means = "The stored multiplication relating the published block to the normalized block."
+does_not_mean = "A conversion performed at analysis time; nothing is derived on the fly."
+fixed_by = "docs/decisions/0007-units.md"
+needed_by = ["#38", "#25"]
+
+[[field]]
+path = "measurement.definition_epoch"
+type = "identifier"
+presence = "required"
+resolves_to = "the definition_epochs set of the quantity's vocabulary entry"
+means = "The definitional regime the source published under."
+does_not_mean = "The publication date; a paper can publish under a superseded regime."
+fixed_by = "docs/decisions/0007-units.md"
+needed_by = ["#42"]
+
+[[field]]
+path = "measurement.denominator_quantity"
+type = "identifier-or-literal"
+literals = ["definitional"]
+presence = "conditional"
+required_when = { vocabulary_field = "dimension", equals = "dimensionless" }
+refused_when = { vocabulary_field = "dimension", not_equals = "dimensionless" }
+machine_decidable = true
+condition_note = "The condition is read from the quantity's vocabulary entry rather than from the record, so a validator needs the vocabulary loaded to decide it."
+means = "What the value is expressed relative to."
+fixed_by = "docs/decisions/0007-units.md"
+needed_by = ["#38"]
+
+# ---------------------------------------------------------------------------
+# publication
+# ---------------------------------------------------------------------------
+
+[[field]]
+path = "publication.date"
+type = "partial-date"
+presence = "required"
+means = "When this value entered the literature, as precise as the source states it and no more precise."
+does_not_mean = "When the measurement was made, which is publication.data_taken."
+fixed_by = "docs/decisions/0004-record-schema.md"
+needed_by = ["#42", "#45", "#46"]
+
+[[field]]
+path = "publication.submitted"
+type = "partial-date"
+presence = "optional"
+optional_because = "Many sources do not print a received or submitted date, which is a fact about the literature."
+means = "The last date by which the authors' own analysis was fixed."
+does_not_mean = "When the data were taken."
+fixed_by = "docs/decisions/0004-record-schema.md"
+needed_by = ["#45", "#46"]
+
+[[field]]
+path = "publication.data_taken_status"
+type = "string"
+presence = "required"
+values = ["reported", "none-in-source", "not-transcribed"]
+means = "Whether the source says when its data were taken, says nothing, or has not been read yet."
+fixed_by = "docs/decisions/0004-record-schema.md"
+needed_by = ["#46"]
+absence_is_written = true
+
+[[field]]
+path = "publication.data_taken"
+type = "date-range"
+presence = "conditional"
+required_when = { field = "publication.data_taken_status", equals = "reported" }
+refused_when = { field = "publication.data_taken_status", in = ["none-in-source", "not-transcribed"] }
+means = "When the measurement was taken."
+does_not_mean = "The analysis period."
+fixed_by = "docs/decisions/0004-record-schema.md"
+needed_by = ["#46"]
+
+# ---------------------------------------------------------------------------
+# method
+# ---------------------------------------------------------------------------
+
+[[field]]
+path = "method.technique"
+type = "identifier"
+presence = "required"
+resolves_to = "the techniques set of the quantity's vocabulary entry"
+means = "How this value was obtained."
+does_not_mean = "The apparatus or the laboratory."
+fixed_by = "docs/decisions/0006-quantity-identity.md"
+needed_by = ["#40", "#46"]
+
+[[field]]
+path = "method.note"
+type = "string"
+presence = "optional"
+optional_because = "Most records need nothing said."
+free_text = true
+readable_by_analysis = false
+means = "What a later reader needs to know that no coded field carries."
+does_not_mean = "Anything to any analysis. No analysis reads this field and nothing may be grouped, filtered or counted by it."
+fixed_by = "docs/decisions/0004-record-schema.md"
+needed_by = []
+
+# ---------------------------------------------------------------------------
+# group and lineage
+# ---------------------------------------------------------------------------
+
+[[field]]
+path = "group.id"
+type = "identifier"
+presence = "required"
+resolves_to = "group/<value>.toml"
+means = "Who made this measurement, at the granularity at which two measurements share systematics."
+does_not_mean = "The institution's legal identity, or the author list."
+fixed_by = "docs/decisions/0004-record-schema.md"
+needed_by = ["#38", "#41"]
+
+[[field]]
+path = "lineage.supersedes"
+type = "list<record-path>"
+presence = "optional"
+optional_because = "Most measurements supersede nothing, which is a fact about the literature."
+means = "The authors present this value as replacing those earlier values of theirs."
+fixed_by = "docs/decisions/0004-record-schema.md"
+needed_by = ["#38"]
+
+[[field]]
+path = "lineage.superseded_by"
+type = "record-path"
+presence = "optional"
+optional_because = "Most measurements are superseded by nothing, which is a fact about the literature."
+means = "A later publication by the same group presents its value as replacing this one."
+does_not_mean = "That this record is withdrawn from the corpus, which is status and the top-level superseded_by."
+fixed_by = "docs/decisions/0004-record-schema.md"
+needed_by = ["#38", "#42"]
+
+# ---------------------------------------------------------------------------
+# source
+# ---------------------------------------------------------------------------
+
+[[field]]
+path = "source.identifier"
+type = "list<source-identifier>"
+presence = "conditional"
+required_when = { field = "source.print", absent = true }
+refused_when = { never = true }
+min_length = 1
+means = "How the source is named in a scheme that resolves, stored bare and without a resolver prefix."
+does_not_mean = "That the identifier resolves; nothing in the gate resolves anything."
+fixed_by = "docs/decisions/0008-provenance.md"
+needed_by = ["#48"]
+
+[[field]]
+path = "source.print"
+type = "print-block"
+presence = "conditional"
+required_when = { field = "source.identifier", absent = true }
+refused_when = { never = true }
+means = "The bibliographic fields needed to find the item in a library."
+fixed_by = "docs/decisions/0008-provenance.md"
+needed_by = ["#48"]
+
+[[field]]
+path = "source.resolvable"
+type = "boolean"
+presence = "conditional"
+required_when = { field = "source.identifier", absent = true }
+refused_when = { field = "source.identifier", present = true }
+means = "Written false when no identifier exists, so that a transcriber who had none and a transcriber who did not look are different states."
+fixed_by = "docs/decisions/0008-provenance.md"
+needed_by = ["#48"]
+absence_is_written = true
+
+[[field]]
+path = "source.locator"
+type = "locator-block"
+presence = "required"
+means = "Where inside the source the value was read."
+does_not_mean = "A PDF page count; page is the page as printed."
+fixed_by = "docs/decisions/0008-provenance.md"
+needed_by = ["#48"]
+
+[[field]]
+path = "source.statement_kind"
+type = "string"
+presence = "required"
+values = ["primary-result", "abstract", "summary-table", "combined-fit", "figure", "erratum"]
+means = "What kind of statement the source was making where the value was read."
+does_not_mean = "How reliable the value is; combined-fit and figure change what an analysis may do, the rest change what a reader should expect."
+fixed_by = "docs/decisions/0008-provenance.md"
+needed_by = ["#38", "#48"]
+
+[[field]]
+path = "source.directness"
+type = "string"
+presence = "required"
+values = ["primary", "secondary"]
+means = "Whether somebody opened the source named here, or read the value in something citing it."
+does_not_mean = "Confirmation, which is orthogonal and is source.confirmation."
+fixed_by = "docs/decisions/0008-provenance.md"
+needed_by = ["#48"]
+
+[[field]]
+path = "source.via"
+type = "via-block"
+presence = "conditional"
+required_when = { field = "source.directness", equals = "secondary" }
+refused_when = { field = "source.directness", equals = "primary" }
+means = "What was actually read, when the value came from a review, a compilation or a database."
+does_not_mean = "Evidence about what the paper said; a secondary record is a record of what the review said."
+fixed_by = "docs/decisions/0008-provenance.md"
+needed_by = ["#48"]
+
+[[field]]
+path = "source.confirmation"
+type = "string"
+presence = "required"
+values = ["unconfirmed", "confirmed", "disputed"]
+means = "Whether a second person independently read the same locator and got the same value."
+does_not_mean = "That the value is right; a disputed record stays in the corpus and is excluded from every analysis."
+fixed_by = "docs/decisions/0008-provenance.md"
+needed_by = ["#48"]
+
+[[field]]
+path = "source.confirmed_by"
+type = "string"
+presence = "conditional"
+required_when = { field = "source.confirmation", equals = "confirmed" }
+refused_when = { field = "source.confirmation", in = ["unconfirmed", "disputed"] }
+means = "The confirming reader's contributor identity, in the form the version history already holds it."
+does_not_mean = "New personal data; it adds nothing the repository's history does not already carry."
+fixed_by = "docs/decisions/0008-provenance.md"
+needed_by = ["#48"]
+
+# ---------------------------------------------------------------------------
+# correction
+# ---------------------------------------------------------------------------
+
+[[field]]
+path = "correction"
+type = "list<correction-entry>"
+presence = "optional"
+optional_because = "Most records have never been corrected."
+append_only = true
+means = "What was changed on this record after it landed, one entry per change."
+fixed_by = "docs/decisions/0012-where-correction-history-lives.md"
+needed_by = ["#48"]
+
+# ---------------------------------------------------------------------------
+# Composite types. Each is a shape one or more fields above declare.
+# ---------------------------------------------------------------------------
+
+[type.uncertainty-component]
+fixed_by = "docs/decisions/0005-uncertainty.md"
+note = "One component as the source separated it. Nothing is combined on the way in."
+
+[[type.uncertainty-component.member]]
+name = "component"
+type = "string"
+presence = "required"
+values = ["statistical", "systematic", "total", "other"]
+means = "Which component the source quoted; total means the source quoted one combined number and did not break it down."
+
+[[type.uncertainty-component.member]]
+name = "label"
+type = "string"
+presence = "conditional"
+required_when = { field = "component", equals = "other" }
+refused_when = { field = "component", in = ["statistical", "systematic", "total"] }
+means = "The name the source used for a component that is none of the three coded ones."
+
+[[type.uncertainty-component.member]]
+name = "plus"
+type = "float"
+presence = "required"
+minimum = 0.0
+means = "The upper half-width as published, in the unit of the block it sits in."
+
+[[type.uncertainty-component.member]]
+name = "minus"
+type = "float"
+presence = "required"
+minimum = 0.0
+means = "The lower half-width as published; a symmetric interval writes it equal to plus rather than omitting it."
+
+[[type.uncertainty-component.member]]
+name = "coverage"
+type = "coverage"
+presence = "required"
+means = "How the interval is to be read: a multiple of a standard deviation, a stated level, unstated, or other."
+
+[[type.uncertainty-component.member]]
+name = "coverage_note"
+type = "string"
+presence = "conditional"
+required_when = { field = "coverage", equals = "other" }
+refused_when = { field = "coverage", not_equals = "other" }
+means = "The convention, for the intervals that are neither a k nor a level."
+
+[[type.uncertainty-component.member]]
+name = "interval_kind"
+type = "string"
+presence = "required"
+values = ["frequentist", "bayesian", "unstated"]
+means = "Which kind of interval it is, because a 90 per cent credible interval and a 90 per cent confidence interval are not the same object."
+
+[[type.uncertainty-component.member]]
+name = "correlation_group"
+type = "string"
+presence = "optional"
+optional_because = "The literature rarely says that two experiments shared a systematic."
+means = "A name two records use in common when the same systematic appears in both."
+does_not_mean = "A correlation coefficient; absence does not mean the measurements are independent."
+
+[[type.uncertainty-component.member]]
+name = "rescaling"
+type = "rescaling-block"
+presence = "optional"
+optional_because = "Most quoted intervals were not rescaled."
+means = "The interval before the authors or a third party rescaled it."
+does_not_mean = "That nobody rescaled it, when absent."
+
+[type.rescaling-block]
+fixed_by = "docs/decisions/0005-uncertainty.md"
+note = "plus and minus on the component hold the value as published, which for a rescaled uncertainty is the rescaled one. Both states are on the record."
+
+[[type.rescaling-block.member]]
+name = "original_plus"
+type = "float"
+presence = "required"
+minimum = 0.0
+means = "The upper half-width before rescaling."
+
+[[type.rescaling-block.member]]
+name = "original_minus"
+type = "float"
+presence = "required"
+minimum = 0.0
+means = "The lower half-width before rescaling."
+
+[[type.rescaling-block.member]]
+name = "factor"
+type = "float"
+presence = "conditional"
+required_when = { source_stated = true }
+machine_decidable = false
+condition_note = "Whether the source stated a factor is not readable from the record, so a validator cannot decide this one."
+means = "The factor the source stated, where it stated one."
+
+[[type.rescaling-block.member]]
+name = "by"
+type = "string"
+presence = "required"
+values = ["authors", "third-party"]
+means = "Who rescaled it."
+
+[[type.rescaling-block.member]]
+name = "note"
+type = "string"
+presence = "required"
+means = "What the source says about the rescaling."
+
+[type.limit]
+fixed_by = "docs/decisions/0005-uncertainty.md"
+note = "A limit is not an interval around a value and is not stored as one."
+
+[[type.limit.member]]
+name = "direction"
+type = "string"
+presence = "required"
+values = ["upper", "lower"]
+means = "Which side of the bound the quantity is on."
+
+[[type.limit.member]]
+name = "bound"
+type = "float"
+presence = "required"
+means = "The bound as the source printed it, in the unit of the block it sits in."
+
+[[type.limit.member]]
+name = "coverage"
+type = "coverage"
+presence = "required"
+means = "How the bound is to be read."
+
+[[type.limit.member]]
+name = "interval_kind"
+type = "string"
+presence = "required"
+values = ["frequentist", "bayesian", "unstated"]
+means = "Which kind of bound it is."
+
+[type.normalized-block]
+fixed_by = "docs/decisions/0007-units.md"
+note = "The same measurement in the quantity's canonical unit, which is the coherent SI unit for its dimension written without a prefix. Computed once at transcription time and committed."
+
+[[type.normalized-block.member]]
+name = "value"
+type = "float"
+presence = "conditional"
+required_when = { field = "measurement.published.value", present = true }
+refused_when = { field = "measurement.published.value", absent = true }
+means = "The published value multiplied by the stored factor, with enough digits that dividing it by that factor recovers the published value to the precision the source printed."
+
+[[type.normalized-block.member]]
+name = "unit"
+type = "string"
+presence = "required"
+means = "The canonical unit of the quantity, which the vocabulary entry is the authority for."
+
+[[type.normalized-block.member]]
+name = "uncertainty"
+type = "list<uncertainty-component>"
+presence = "conditional"
+required_when = { field = "measurement.published.uncertainty_status", equals = "reported" }
+refused_when = { field = "measurement.published.uncertainty_status", in = ["none-in-source", "not-transcribed"] }
+means = "The published components in the canonical unit, plus the unit-conversion component where the conversion is inexact and not negligible."
+
+[type.conversion-block]
+fixed_by = "docs/decisions/0007-units.md"
+note = "The factor is written even when it is exactly 1, because a field present on some records and absent on others is a field every consumer has to branch on."
+
+[[type.conversion-block.member]]
+name = "factor"
+type = "float"
+presence = "required"
+means = "The number the published value is multiplied by to give the normalized value."
+
+[[type.conversion-block.member]]
+name = "exact"
+type = "boolean"
+presence = "required"
+means = "True when the factor is fixed by definition, false when it is a measured quantity with a published uncertainty of its own."
+
+[[type.conversion-block.member]]
+name = "factor_relative_uncertainty"
+type = "float"
+presence = "conditional"
+required_when = { field = "exact", equals = false }
+refused_when = { field = "exact", equals = true }
+minimum = 0.0
+named_here = true
+means = "The relative uncertainty of the factor, stored so that the negligibility judgement carries the numbers that produced it."
+
+[[type.conversion-block.member]]
+name = "imported_uncertainty"
+type = "string"
+presence = "conditional"
+required_when = { field = "exact", equals = false }
+refused_when = { field = "exact", equals = true }
+values = ["carried", "negligible"]
+means = "Whether the factor's uncertainty appears as a component in the normalized block, or was judged negligible against the smallest relative uncertainty the measurement quotes."
+
+[[type.conversion-block.member]]
+name = "factor_source"
+type = "string"
+presence = "required"
+named_here = true
+means = "Which published authority the factor was taken from: the SI Brochure edition for an exact factor, or the CODATA adjustment by year for an inexact one."
+
+[type.print-block]
+fixed_by = "docs/decisions/0008-provenance.md"
+note = "What a reader needs to find the item in a library when the source has no identifier in any scheme."
+
+[[type.print-block.member]]
+name = "publisher"
+type = "string"
+presence = "required"
+named_here = true
+means = "The journal or the publisher, as published."
+
+[[type.print-block.member]]
+name = "volume"
+type = "string"
+presence = "optional"
+optional_because = "Not every print source has one."
+named_here = true
+means = "The volume, as published."
+
+[[type.print-block.member]]
+name = "issue"
+type = "string"
+presence = "optional"
+optional_because = "Not every print source has one."
+named_here = true
+means = "The issue, as published."
+
+[[type.print-block.member]]
+name = "pages"
+type = "string"
+presence = "required"
+named_here = true
+means = "The page range, as published."
+
+[[type.print-block.member]]
+name = "year"
+type = "integer"
+presence = "required"
+named_here = true
+means = "The year of publication, as published."
+
+[[type.print-block.member]]
+name = "authors"
+type = "list<string>"
+presence = "required"
+min_length = 1
+named_here = true
+means = "The author list, as published."
+
+[type.locator-block]
+fixed_by = "docs/decisions/0008-provenance.md"
+note = "At least one member is always present. The labels are the source's, not ours: a table numbered III is stored as III."
+at_least_one_of = ["page", "table", "equation", "figure", "section"]
+
+[[type.locator-block.member]]
+name = "page"
+type = "string"
+presence = "optional"
+optional_because = "Not every value is on a numbered page."
+means = "The page of the source as printed, never the page of a PDF."
+
+[[type.locator-block.member]]
+name = "table"
+type = "string"
+presence = "optional"
+optional_because = "Not every value is in a table."
+means = "The table's own label as the source gives it."
+
+[[type.locator-block.member]]
+name = "equation"
+type = "string"
+presence = "optional"
+optional_because = "Not every value is in an equation."
+means = "The equation's own number as the source gives it."
+
+[[type.locator-block.member]]
+name = "figure"
+type = "string"
+presence = "optional"
+optional_because = "Not every value is in a figure."
+means = "The figure's own label, used when the value was read from a figure or its caption."
+
+[[type.locator-block.member]]
+name = "section"
+type = "string"
+presence = "optional"
+optional_because = "Not every value sits in a numbered section."
+means = "The section's own number or title."
+
+[type.source-identifier]
+fixed_by = "docs/decisions/0008-provenance.md"
+note = "Stored bare. A resolver prefix is a routing decision that belongs to whoever is resolving, and storing it bakes today's resolver into every record."
+
+[[type.source-identifier.member]]
+name = "scheme"
+type = "string"
+presence = "required"
+values = ["doi", "arxiv", "bibliographic-service", "isbn", "url"]
+named_here = true
+means = "Which scheme the value is an identifier in."
+
+[[type.source-identifier.member]]
+name = "value"
+type = "string"
+presence = "required"
+named_here = true
+syntax_checked_against = "the scheme's own published syntax, which lives with the checker rather than here"
+means = "The identifier itself, in its canonical bare form."
+
+[type.via-block]
+fixed_by = "docs/decisions/0008-provenance.md"
+note = "Both members are required. A secondary record without them claims a chain of custody it cannot show."
+
+[[type.via-block.member]]
+name = "identifier"
+type = "list<source-identifier>"
+presence = "required"
+min_length = 1
+means = "How the thing actually read is named, under the same scheme rules as the source."
+
+[[type.via-block.member]]
+name = "locator"
+type = "locator-block"
+presence = "required"
+means = "Where inside the thing actually read the value was found."
+
+[type.correction-entry]
+fixed_by = "docs/decisions/0012-where-correction-history-lives.md"
+note = "Append-only. A record is never deleted, including a duplicate or a withdrawal."
+
+[[type.correction-entry.member]]
+name = "date"
+type = "date"
+presence = "required"
+means = "When the correction landed."
+
+[[type.correction-entry.member]]
+name = "kind"
+type = "string"
+presence = "required"
+values = ["transcription", "not-in-source", "duplicate", "withdrawal", "metadata"]
+means = "Which class of correction it is; not-in-source means the provenance failed rather than that a digit slipped."
+
+[[type.correction-entry.member]]
+name = "field"
+type = "string"
+presence = "required"
+means = "The path of the field that changed, written in the paths this schema fixes."
+
+[[type.correction-entry.member]]
+name = "was"
+type = "any"
+presence = "required"
+means = "The value before the correction."
+
+[[type.correction-entry.member]]
+name = "now"
+type = "any"
+presence = "required"
+means = "The value after it, of the same kind and in the same unit as was."
+
+[[type.correction-entry.member]]
+name = "reason"
+type = "string"
+presence = "required"
+means = "What went wrong, in enough detail that a reader can tell a copying error from a provenance failure."
+
+[[type.correction-entry.member]]
+name = "reported_in"
+type = "string"
+presence = "required"
+means = "The issue the correction was reported in."
+
+# ---------------------------------------------------------------------------
+# Scalar types this file uses, so that a reader does not have to infer them.
+# ---------------------------------------------------------------------------
+
+[scalar.identifier]
+pattern_key = "identifier_pattern"
+max_length_key = "identifier_max_length"
+note = "One syntax for a quantity id, a technique id, a group id and a definition-epoch id."
+
+[scalar.record-path]
+pattern_key = "record_path_pattern"
+note = "A path relative to the repository root. Whether it resolves to a file that exists is a check over the corpus rather than over one record."
+
+[scalar.coverage]
+pattern_key = "coverage_pattern"
+note = "k=<n>, cl=<percent>, unstated, or other with a coverage_note beside it."
+
+[scalar.partial-date]
+formats = ["YYYY", "YYYY-MM", "YYYY-MM-DD"]
+note = "As precise as the source states it and no more precise. A year alone is a complete answer where that is what the source gives."
+
+[scalar.date]
+formats = ["YYYY-MM-DD"]
+note = "A full date. Used where the date is this project's own act rather than the source's."
+
+[scalar.date-range]
+members = ["start", "end"]
+member_type = "partial-date"
+note = "Either end may be a year alone where that is all the source gives."
+
+[scalar.float]
+note = "A TOML float. Written in the precision the source printed, and never rounded on the way in."
+
+[scalar.any]
+note = "Whatever type the field named beside it holds. Used only inside a correction entry, where was and now mirror an arbitrary field."

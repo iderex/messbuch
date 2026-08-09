@@ -331,8 +331,9 @@ behaved than it is. A corpus assembled to test whether quoted intervals are
 trustworthy may not fill in the missing ones with a convenient convention.
 
 Nothing in this repository refuses a record that violates any of this.
-`PROSE, NOT ENFORCEMENT`. There is no schema file and no validator here today;
-the structural and meaning legs of the validator are open on the corpus
+`PROSE, NOT ENFORCEMENT`. The shapes above are written into
+`schema/record-1.toml` and nothing reads that file; the structural and meaning
+legs of the validator are open on the corpus
 milestone. Every rule above is checked by a reviewer until they land, and the
 analysis-time defaults are descriptions of code that does not exist yet rather
 than of behaviour anybody has observed.

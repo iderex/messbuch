@@ -380,12 +380,13 @@ keeps the transcriber's note where a reader can see it and keeps it out of
 every count.
 
 Nothing in this repository refuses any of this. `PROSE, NOT ENFORCEMENT`.
-There is no schema file, no validator, no vocabulary loader and no build here
-today, so a record missing every required field above, or carrying a field
-this record refuses, passes every route in this repository. The
-machine-readable form of this field set is owed by #23, the structural
-refusals by #24, the meaning refusals by #25, and the fixture behind each
-refusal by #26. The `group/` registry that `group.id` resolves against does
+The machine-readable form of this field set is now `schema/record-1.toml`, and
+nothing reads it: there is no validator and no vocabulary loader, so a record
+missing every required field above, or carrying a field this record refuses,
+passes every route in this repository. The gate parses that file as TOML and
+makes no statement about its contents. The structural
+refusals are owed by #24, the meaning refusals by #25, and the fixture behind
+each refusal by #26. The `group/` registry that `group.id` resolves against does
 not exist and nothing on this board owed it before this record; an issue is
 opened for it on the seed-corpus milestone. Until all of that lands, the field
 list above is a description of a program nobody has written, checked by a
