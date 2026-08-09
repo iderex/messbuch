@@ -59,21 +59,26 @@ jobs:
       # inside it. A guard nobody has seen fail is a guard nobody knows works,
       # and this one is what stands behind the name in the job above.
       #
-      # Only this leg's proofs. Running the whole package red this job for a
-      # formatting defect on the branch that landed the formatter check, which
-      # is exactly the confusion a check reporting under one property's name
-      # must not create. The filter is a prefix every test of this leg carries,
-      # and the floor below is what stops a filter that has stopped matching
-      # from passing silently: a `-run` matching nothing exits zero, which is
-      # the one failure mode a name filter introduces.
+      # Only this leg's proofs, and only the ones that read a fixture. Running
+      # the whole package red this job for a formatting defect on the branch
+      # that landed the formatter check, which is exactly the confusion a check
+      # reporting under one property's name must not create. The test that
+      # reads this repository's own tree is outside the filter as well, because
+      # judging the tree is the step below and its refusal is the more useful
+      # message.
+      #
+      # The filter is a prefix every fixture proof of this leg carries, and the
+      # floor below is what stops a filter that has stopped matching from
+      # passing silently: a `-run` matching nothing exits zero, which is the one
+      # failure mode a name filter introduces.
       - name: Prove the leg refuses what it names, and accepts the near miss
         run: |
           set -euo pipefail
           out=$(go test ./internal/gate -run '^TestNetImports' -count=1 -v)
           printf '%s\n' "$out"
           ran=$(printf '%s\n' "$out" | grep -c '^--- PASS' || true)
-          if [ "$ran" -lt 9 ]; then
-            echo "::error::Expected at least 9 proofs of this leg and ${ran} ran. Either the name filter in this workflow has stopped matching, or a proof was deleted."
+          if [ "$ran" -lt 8 ]; then
+            echo "::error::Expected at least 8 proofs of this leg and ${ran} ran. Either the name filter in this workflow has stopped matching, or a proof was deleted."
             exit 1
           fi
           echo "${ran} proof(s) of this leg ran."
