@@ -42,9 +42,9 @@ func Legs() []Leg {
 		},
 		{
 			ID:      "format-and-lint",
-			Subject: "formatting and lint over the source",
-			Owed: "not built. Issue #17 owes it, and it decides which linter\n" +
-				"and which settings. Nothing in this run read the formatting of any file.",
+			Subject: "formatting and lint over the source and the tracked prose",
+			Run:     formatAndLintLeg,
+			Limits:  limitsOfFormatAndLint,
 		},
 		{
 			ID:      "validate-corpus",

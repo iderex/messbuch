@@ -72,6 +72,7 @@ stated, because a count in a sentence drifts against the table under it.
 | `Audit workflows (zizmor)` | `.github/workflows/zizmor.yml` | Any actionable zizmor finding at low severity or above in the workflow files, and a workflow that fails to parse. | Yes. Triggered on `pull_request` against `"**"`. The job's only conditional is on the SARIF upload step, not on the gating step and not on the job. |
 | `Deterministic PR-hygiene checks` | `.github/workflows/pr-hygiene.yml` | A pull request body naming no issue, and a commit message carrying a byte outside printable ASCII plus line feed and horizontal tab. Fails closed if the commit range cannot be walked, and refuses before reading the pull request at all if its own fixtures do not behave as it claims. | Yes. Triggered on `pull_request` with types `opened`, `synchronize`, `reopened` and `edited`, and no branch or path filter. |
 | `No network outside the net package` | `.github/workflows/no-network-imports.yml` | A package other than `internal/net` and its own dependencies transitively reaching a network-capable import path, test files included. Fails closed: a tree whose import graph cannot be computed, and a module whose package set comes back empty, are both refusals. | Yes. Triggered on `pull_request` with the default types and no branch, path or base filter. |
+| `Format and lint` | `.github/workflows/format-and-lint.yml` | Go source that is not what gofmt writes, a tracked Markdown, YAML or TOML file carrying trailing whitespace or no final newline, and anything `go vet` objects to. Fails closed: a tree whose files cannot be walked, and a tree carrying no source and no prose at all, are both refusals. | Yes. Triggered on `pull_request` with the default types and no branch, path or base filter. |
 
 `Deterministic PR-hygiene checks` has a property anyone requiring it needs to
 know, and it is deliberate rather than a defect. It refuses only where the head
@@ -94,6 +95,14 @@ so it now has a subject:
     git ls-files go.mod go.sum
     go.mod
     go.sum
+
+`Format and lint` checks and never applies. What repairs a refusal is one
+command, `go run . fmt`, and it writes exactly what the check demands because
+both go through the same function rather than through two ideas of what
+formatted means. The refusal names that command. The check is not a prose
+style, a line length or a spelling, its lint half is `go vet` and nothing else,
+and `LICENSE` and `DCO` are read by neither half because their bytes are copies
+of texts this project may not normalise.
 
 `No network outside the net package` carries its own limits and they are
 printed beside its result on every run rather than only here. It refuses a
@@ -123,7 +132,6 @@ above with extra steps.
 | --- | --- | --- |
 | `Build and test` | #16 | A pull request that does not build, or whose tests fail, or that produces a warning, run through the same single command a contributor runs locally. |
 | `Validate the corpus` | #24 | A record file that is not a well formed record: a parse failure, an unknown field, a missing required field, a wrong type, a value outside a closed set, a duplicate identifier, or a file in the wrong place for what it claims to be. |
-| not yet fixed | #17 | Formatting and lint. |
 | not yet fixed | #18 | Static analysis of the source, reporting into the code scanning tab. The issue fixes the job name as `Analyze` extended with the language where the analysis distinguishes languages, so the exact string is not knowable until the language decision lands. |
 
 When one of these lands, the pull request that lands it fills in its row here.

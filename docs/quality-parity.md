@@ -94,7 +94,7 @@ is adopted as it stands and carries one line wherever this board deviates.
 | Build with warnings as errors | `dotnet.yml`, in the `build` job: `dotnet build --no-restore --warnaserror` | Adopted | #16, through the single command #14 creates | |
 | The test suite | `dotnet.yml`, in the `build` job: `dotnet test --no-build --verbosity normal` | Adopted | #15 for the harness, #16 for the check that runs it | |
 | A coverage bar on the surface that decides refusals, failing closed on an unreadable or empty report | `dotnet.yml`, the `Enforce the security-surface coverage bar` step, which runs `scripts/check-coverage.py` over a Cobertura report | Adapted | #50 | There the surface is the code that authorises a login; here it is the validator's refusal paths and the estimators, because the equivalent of letting the wrong person in is admitting a wrong number or computing one |
-| A formatter check that reports rather than applies | `prettier.yml`, job id `prettier` with no `name:` | Adopted | #17 | |
+| A formatter check that reports rather than applies | `prettier.yml`, job id `prettier` with no `name:` | Adopted, with the repair command in the same code path | In place, landed by #17 as `.github/workflows/format-and-lint.yml` | The check and the fix are one function here rather than two tools that agree until they do not, so `go run . fmt` writes exactly what the check demands. The prose half is trailing whitespace and a final newline rather than a prose formatter, because a Markdown formatter would add a runtime this tree does not carry, and the line-ending question is settled in `.gitattributes` rather than in a formatter setting |
 | Static analysis of the source, reporting into the code scanning tab | `codeql.yml`, contexts `CodeQL` and `Analyze (csharp)` | Adopted | #18 | |
 | Dependency review of newly introduced and upgraded dependencies | `dependency-review.yml`, job id `dependency-review` with no `name:` | Adopted, and already in place | In place, `.github/workflows/dependency-review.yml` | |
 | The Trojan Source unicode guard | `unicode-guard.yml`, `Reject Trojan Source Unicode` | Adopted, and already in place | In place, `.github/workflows/unicode-guard.yml` | |
@@ -150,27 +150,29 @@ does not find two issues the map never mentions and conclude the map is stale.
 ## Which legs are not yet in place
 
 Plainly, and this is the important section. Of the seventeen legs in the map,
-six are in place on this board and one needs nothing built at all. The other ten
-name work this board still owes, and seven of the ten were waiting on a source
-tree to build against, which now exists.
+seven are in place on this board and one needs nothing built at all. The other
+nine name work this board still owes, and six of the nine were waiting on a
+source tree to build against, which now exists.
 
 In place today, all reporting on every pull request:
 
     git ls-files .github/workflows/
     .github/workflows/dco.yml
     .github/workflows/dependency-review.yml
+    .github/workflows/format-and-lint.yml
     .github/workflows/no-network-imports.yml
     .github/workflows/pr-hygiene.yml
     .github/workflows/scorecard.yml
     .github/workflows/unicode-guard.yml
     .github/workflows/zizmor.yml
 
-Run on the branch that lands the network check. Before it, that list is the same
-without `no-network-imports.yml`.
+Run on the branch that lands the formatter check. Before it, that list is the
+same without `format-and-lint.yml`.
 
-That is the sign off check, dependency review, the pull request hygiene check,
-the unicode guard, the workflow audit and the invariants leg. `scorecard.yml` is
-not a gate leg and `docs/required-checks.md` says why it must never be required.
+That is the sign off check, dependency review, the formatter check, the pull
+request hygiene check, the unicode guard, the workflow audit and the invariants
+leg. `scorecard.yml` is not a gate leg and `docs/required-checks.md` says why it
+must never be required.
 
 Not in place as a check on a pull request, and no longer waiting on the source
 tree or the dependency manifest they read, because both now exist:
@@ -179,31 +181,33 @@ tree or the dependency manifest they read, because both now exist:
     11
 
 The locked restore, the build with warnings as errors, the test suite, the
-coverage bar, the formatter check, the static analysis and the format
-compatibility check are all in that state. The first of them to land was the
-toolchain pin and the single command, #14, and the rest wrap or read what it
-creates.
+coverage bar, the static analysis and the format compatibility check are all in
+that state. The first of them to land was the toolchain pin and the single
+command, #14, and the rest wrap or read what it creates.
 
-Two of those seven now exist inside that command rather than merely being
+Two of those six now exist inside that command rather than merely being
 startable. The locked restore is its `modules` leg, which runs `go mod verify`
 against `go.sum` with `-mod=readonly` set, so a build cannot quietly rewrite the
-pins to make itself work. The build is its `build` leg. Warnings as errors is
-not part of either and is owed by #16 and #17, which decide the spelling.
+pins to make itself work. The build is its `build` leg. Warnings as errors has
+no direct spelling in this toolchain, since the Go compiler refuses rather than
+warns; what stands in for it is the `format-and-lint` leg's `go vet`, and
+whether #16 wants more than that is #16's to decide.
 
-One leg of that command runs on a pull request and the rest do not, and the
-distinction is the whole subject of this section. `no-network-imports.yml`
-invokes the single leg it reports under, so the offline boundary is something
-this board refuses a change over. Everything else in the command is still
-something a contributor runs, until #16 wraps the whole of it. The command
-prints which of its own legs it did not run, and that output is the authority
-for the covered set rather than this document:
+Two legs of that command run on a pull request and the rest do not, and the
+distinction is the whole subject of this section. `no-network-imports.yml` and
+`format-and-lint.yml` each invoke the single leg they report under, so the
+offline boundary and the formatting are things this board refuses a change
+over. Everything else in the command is still something a contributor runs,
+until #16 wraps the whole of it. The command prints which of its own legs it
+did not run, and that output is the authority for the covered set rather than
+this document:
 
     go run . ci
 
 Not in place, and blocked on something other than the source tree: the package
 build and the release inventory, which need a release to be published at all, and
-which sit on the release milestone behind #56. That is nine of the ten. The
-tenth is the network integration harness, which is owed by #15 and is the one
+which sit on the release milestone behind #56. That is eight of the nine. The
+ninth is the network integration harness, which is owed by #15 and is the one
 piece of parity work here that is deliberately never a gate leg.
 
 Two of the legs already in place reported on a subject that did not exist, and
@@ -213,8 +217,8 @@ now give it a manifest to review. The pull request hygiene check reads the pull
 request rather than the tree, so it is the leg here that has been fully doing
 its job throughout.
 
-Five checks are required on this board's protected branch, and the invariants
-leg is not among them:
+Five checks are required on this board's protected branch, and neither the
+formatter check nor the invariants leg is among them:
 
     gh api repos/iderex/messbuch/rules/branches/main \
       --jq '.[] | select(.type=="required_status_checks")
@@ -222,9 +226,9 @@ leg is not among them:
     DCO sign-off; dependency-review; Deterministic PR-hygiene checks; Reject Trojan Source Unicode; Audit workflows (zizmor)
 
 That is the five that were already reporting when the set was configured. A
-check outside that list reports and does not refuse a merge, so `No network
-outside the net package` is advice on the branch until the maintainer adds the
-string. Which strings belong in the set is what `docs/required-checks.md` is
+check outside that list reports and does not refuse a merge, so `Format and
+lint` and `No network outside the net package` are advice on the branch until
+the maintainer adds their strings. Which strings belong in the set is what `docs/required-checks.md` is
 written to be read against, and configuring it is the first item on the release
 checklist.
 

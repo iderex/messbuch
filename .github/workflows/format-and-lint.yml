@@ -1,0 +1,62 @@
+# Formatting and lint (#17), so that no review spends a sentence on layout.
+#
+# Checked here, never applied. What repairs a refusal is one command a
+# contributor runs locally, `go run . fmt`, and it writes exactly the bytes
+# this check demands because both go through the same function. A check that
+# describes what it wants instead of producing it leaves everybody guessing at
+# the difference between their formatter and this one.
+#
+# The line-ending trap is settled in `.gitattributes` rather than in a
+# formatter setting. Every tracked text file is stored and checked out with LF
+# on every platform, so a runner that checks out on Linux and a contributor on
+# Windows read the same bytes. The leg additionally leaves a carriage return
+# where it finds one, so a working copy made before that attribute landed is
+# not reported as a tree of misformatted files with a real defect hidden in it.
+#
+# What the leg reads, and what it does not, is printed beside its result. It is
+# not restated here, because a copy in this file drifts against the code that
+# decides it.
+name: Format and lint
+
+on:
+  # No branch filter, no path filter, no base filter. A check that reports on
+  # only some pull requests leaves the branch looking guarded when it is not.
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: format-and-lint-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  format-and-lint:
+    # The literal check-run name a branch protection matches, fixed by #17.
+    # Renaming it empties a required set without reporting anything.
+    name: Format and lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # No step pushes, so do not leave the token in .git/config.
+          persist-credentials: false
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          # The pin in go.mod and nothing else. A version written here would be
+          # a second pin, and the two would disagree on the day one moves.
+          go-version-file: go.mod
+
+      # The proof before the check, on every invocation. The fixtures assert
+      # that a trailing space, a missing final newline and unformatted Go are
+      # each refused, that the fix produces what the check demands, and that a
+      # carriage return is not treated as a defect. A guard nobody has seen
+      # fail is a guard nobody knows works.
+      - name: Prove the leg refuses what it names, and repairs it
+        run: go test ./internal/gate -count=1 -v
+
+      - name: Refuse source and prose that are not written as this repository writes them
+        run: go run . ci format-and-lint
