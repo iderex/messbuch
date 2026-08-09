@@ -389,31 +389,13 @@ func (c *checker) holds(cond *schema.Condition, local map[string]any) (result, d
 
 // describeCondition puts a condition into the sentence a refusal prints, so
 // that a contributor is told which other field decided this one.
+//
+// The sentence comes from the schema package rather than from here, because
+// `go run . schema` prints the same condition to the same contributor before
+// they write the file. Two renderings would drift, and the reader who noticed
+// would have no way to tell which of them the validator obeys.
 func describeCondition(cond *schema.Condition) string {
-	if cond == nil {
-		return "the schema says so"
-	}
-	switch {
-	case cond.Present != nil && *cond.Present:
-		return cond.Field + " is present"
-	case cond.Present != nil:
-		return cond.Field + " is absent"
-	case cond.Absent != nil && *cond.Absent:
-		return cond.Field + " is absent"
-	case cond.Absent != nil:
-		return cond.Field + " is present"
-	case cond.Equals != nil:
-		return fmt.Sprintf("%s is %v", cond.Field, cond.Equals)
-	case cond.NotEquals != nil:
-		return fmt.Sprintf("%s is not %v", cond.Field, cond.NotEquals)
-	case len(cond.In) > 0:
-		var parts []string
-		for _, one := range cond.In {
-			parts = append(parts, fmt.Sprint(one))
-		}
-		return fmt.Sprintf("%s is one of %s", cond.Field, strings.Join(parts, ", "))
-	}
-	return "the schema says so"
+	return cond.Describe()
 }
 
 // value checks one present value against the type its field declares.

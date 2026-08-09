@@ -50,13 +50,25 @@ Nothing to install beyond a Go toolchain at the version `go.mod` pins. The first
 leg compares the release you are running against that pin and refuses a mismatch,
 so a wrong toolchain is a named failure rather than a strange one.
 
-One more command exists and it is not a gate:
+Other commands exist and none of them is a gate. They are printed rather than
+listed here, for the same reason the legs are:
+
+    go run . help
+
+Two of them are worth knowing before you start.
 
     go run . fmt
 
-It writes the bytes the formatting leg demands. Check and fix go through the
-same function, so there is no gap between what the gate wants and what the fix
+writes the bytes the formatting leg demands. Check and fix go through the same
+function, so there is no gap between what the gate wants and what the fix
 produces.
+
+    go run . schema
+
+prints the record schema as sentences: every field, what it may hold, when it
+has to be there, and what it means. It renders the file the validator reads
+rather than a second copy of it, so it cannot tell you a rule the validator
+does not apply.
 
 ## What runs on a pull request
 

@@ -53,6 +53,11 @@ type Schema struct {
 	// Path is where the file was read from, so a refusal can name it.
 	Path string
 
+	// FixedOn is the day this version's field set stopped moving, as the file
+	// states it. A reader of the printed schema wants it beside the version
+	// number: the two together say which document they are holding.
+	FixedOn string
+
 	RecordPath              *regexp.Regexp
 	ExcludedDirectoryPrefix string
 	Identifier              *regexp.Regexp
@@ -248,6 +253,7 @@ func loadOne(path, rel string) (*Schema, error) {
 
 	s := &Schema{
 		Version:                 f.SchemaVersion,
+		FixedOn:                 f.FixedOn,
 		Path:                    rel,
 		ExcludedDirectoryPrefix: f.ExcludedDirectoryPrefix,
 		IdentifierMaxLength:     f.IdentifierMaxLength,

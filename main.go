@@ -17,6 +17,7 @@ import (
 	"os"
 
 	"github.com/iderex/messbuch/internal/gate"
+	"github.com/iderex/messbuch/internal/schema"
 )
 
 func main() {
@@ -68,6 +69,26 @@ func main() {
 			fmt.Println(name)
 		}
 		fmt.Printf("\n%d file(s) rewritten.\n", len(changed))
+	case "schema":
+		// The schema file is written for a program to read. This prints the
+		// same authority as sentences, so that a contributor transcribing a
+		// measurement never has to open TOML or Go to find out what a field
+		// may hold. It renders the loaded schema and restates nothing, so it
+		// cannot say something the validator does not obey.
+		wd, err := os.Getwd()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "cannot read the working directory: %v\n", err)
+			os.Exit(1)
+		}
+		set, err := schema.Load(wd)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "%v\n", err)
+			os.Exit(1)
+		}
+		if err := schema.Print(os.Stdout, set); err != nil {
+			fmt.Fprintf(os.Stderr, "%v\n", err)
+			os.Exit(1)
+		}
 	case "refusals":
 		// The list lives in the code that produces it and is printed rather
 		// than written down, because a list of refusals in a document drifts
@@ -91,6 +112,7 @@ func usage(w *os.File) {
 	go run . ci         run the local gate
 	go run . ci <leg>   run one leg of it, named by the id the run prints
 	go run . fmt        write the bytes the format-and-lint leg demands
+	go run . schema     print the record schema as sentences
 	go run . refusals   print every refusal the corpus validator can produce
 	go run . help       print this
 
