@@ -21,10 +21,11 @@ checks. It requires no approving review.
     ["DCO sign-off","dependency-review","Deterministic PR-hygiene checks","Reject Trojan Source Unicode","Audit workflows (zizmor)"]
 
 So a check outside that list can be red and the merge button still works. That
-is where `No network outside the net package`, `Format and lint` and `Build and
-test` stand: each reports on every pull request and refuses nothing on the
-branch until its string is added to the set above. `Build and test` runs the
-whole local gate, so the widest of the three is the one with the least force.
+is where `No network outside the net package`, `Format and lint`, `Build and
+test` and `Analyze (go)` stand: each reports on every pull request and refuses
+nothing on the branch until its string is added to the set above. `Build and
+test` runs the whole local gate, so the widest of the four is the one with the
+least force.
 
 Run those commands rather than trusting the output pasted above. The output is
 what they printed on 2026-08-09. The output this section carried before was
@@ -74,6 +75,7 @@ stated, because a count in a sentence drifts against the table under it.
 | `Deterministic PR-hygiene checks` | `.github/workflows/pr-hygiene.yml` | A pull request body naming no issue, and a commit message carrying a byte outside printable ASCII plus line feed and horizontal tab. Fails closed if the commit range cannot be walked, and refuses before reading the pull request at all if its own fixtures do not behave as it claims. | Yes. Triggered on `pull_request` with types `opened`, `synchronize`, `reopened` and `edited`, and no branch or path filter. |
 | `No network outside the net package` | `.github/workflows/no-network-imports.yml` | A package other than `internal/net` and its own dependencies transitively reaching a network-capable import path, test files included. Fails closed: a tree whose import graph cannot be computed, and a module whose package set comes back empty, are both refusals. | Yes. Triggered on `pull_request` with the default types and no branch, path or base filter. |
 | `Format and lint` | `.github/workflows/format-and-lint.yml` | Go source that is not what gofmt writes, a tracked Markdown, YAML or TOML file carrying trailing whitespace or no final newline, and anything `go vet` objects to. Fails closed: a tree whose files cannot be walked, and a tree carrying no source and no prose at all, are both refusals. | Yes. Triggered on `pull_request` with the default types and no branch, path or base filter. |
+| `Analyze (go)` | `.github/workflows/codeql.yml` | Any result the CodeQL `security-extended` suite reports over the Go source, under the local threat model, so command-line arguments, environment variables and file contents count as untrusted input. Fails closed: no SARIF, or one that will not parse, is a refusal rather than a clean tree. The refusal does not depend on the upload to the code-scanning tab, which is a separate step allowed to fail. | Yes. Triggered on `pull_request` with the default types and no branch, path or base filter. The gate step has no condition, so a fork or Dependabot pull request is refused on a finding even though its upload is skipped. |
 | `Build and test` | `.github/workflows/build-and-test.yml` | Whatever any leg of `go run . ci` refuses, because it invokes the whole command rather than one leg. Today that is the toolchain pin against the running release, the module set against `go.sum` in locked mode, the build, the tests, the headless rule, the corpus decode, the formatting and lint, and the offline boundary. The run prints its own covered set and the leg it stopped at. | Yes. Triggered on `pull_request` with the default types and no branch, path or base filter. |
 
 `Deterministic PR-hygiene checks` has a property anyone requiring it needs to
@@ -137,6 +139,7 @@ an audit than a narrower one that says where it stops.
 | --- | --- | --- |
 | `Scorecard analysis` | `.github/workflows/scorecard.yml` | No `pull_request` trigger, and the job is guarded to the default branch. It can never report on a pull request, so requiring it blocks every merge permanently. |
 | `zizmor` | `.github/workflows/zizmor.yml` | This is the code-scanning check run from the SARIF upload, not the job that fails on findings. It is absent on fork and Dependabot pull requests. Require `Audit workflows (zizmor)` instead. See the measurement below. |
+| `CodeQL` | `.github/workflows/codeql.yml` | The same shape one file over. This is the code-scanning check run from the SARIF upload, not the job that fails on findings, and the upload step is conditioned to same-repository non-Dependabot pull requests, so no such check run exists on a fork or Dependabot pull request. Require `Analyze (go)` instead. |
 
 ## Proposed additions, as each lands
 
@@ -148,7 +151,6 @@ above with extra steps.
 | Matching string | Built by issue | What it will refuse |
 | --- | --- | --- |
 | `Validate the corpus` | #24 | A record file that is not a well formed record: a parse failure, an unknown field, a missing required field, a wrong type, a value outside a closed set, a duplicate identifier, or a file in the wrong place for what it claims to be. |
-| not yet fixed | #18 | Static analysis of the source, reporting into the code scanning tab. The issue fixes the job name as `Analyze` extended with the language where the analysis distinguishes languages, so the exact string is not knowable until the language decision lands. |
 
 When one of these lands, the pull request that lands it fills in its row here.
 A check that exists and is not in this table is a check the maintainer will not
@@ -232,6 +234,35 @@ that fails on purpose and which is never merged:
     gh api repos/iderex/messbuch/commits/d06e44c0d6a84488fb281d40968f83140680980e/check-runs \
       --jq '[.check_runs[] | select(.name=="Build and test") | {name, app: .app.slug, conclusion}]'
     [{"name":"Build and test","app":"github-actions","conclusion":"failure"}]
+
+`Analyze (go)` is confirmed against `b54cd1bae81ba3c0f091384fb2c3727c170fce73`,
+the head of the pull request that added it:
+
+    [{"app":"github-actions","conclusion":"success","name":"Analyze (go)"},
+     {"app":"github-actions","conclusion":"success","name":"Audit workflows (zizmor)"},
+     {"app":"github-actions","conclusion":"success","name":"Build and test"},
+     {"app":"github-advanced-security","conclusion":"success","name":"CodeQL"},
+     {"app":"github-actions","conclusion":"success","name":"DCO sign-off"},
+     {"app":"github-actions","conclusion":"success","name":"Deterministic PR-hygiene checks"},
+     {"app":"github-actions","conclusion":"success","name":"Format and lint"},
+     {"app":"github-actions","conclusion":"success","name":"No network outside the net package"},
+     {"app":"github-actions","conclusion":"success","name":"Reject Trojan Source Unicode"},
+     {"app":"github-actions","conclusion":"success","name":"Reject Trojan Source Unicode"},
+     {"app":"github-actions","conclusion":"success","name":"dependency-review"},
+     {"app":"github-advanced-security","conclusion":"success","name":"zizmor"}]
+
+That output is also where the `CodeQL` row in the previous table comes from. It
+is a second check run under a second name from a second app, produced by the
+upload rather than by the verdict, which is `zizmor` and `Audit workflows
+(zizmor)` again in a different file.
+
+Red, on `653264ed4277c900f3b96d0c135c02b40186c19a`, a branch carrying a path
+read from the command line and an allocation sized from it, which is never
+merged:
+
+    gh api repos/iderex/messbuch/commits/653264ed4277c900f3b96d0c135c02b40186c19a/check-runs       --jq '[.check_runs[] | select(.name|test("Analyze|CodeQL")) | {name, app: .app.slug, conclusion}] | sort_by(.name)'
+    [{"name":"Analyze (go)","app":"github-actions","conclusion":"failure"},
+     {"name":"CodeQL","app":"github-advanced-security","conclusion":"failure"}]
 
 The older output also shows two things the table did not predict, and both are
 the sort of thing that turns a required check into a deadlock.

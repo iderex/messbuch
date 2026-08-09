@@ -215,13 +215,26 @@ surfaces there. Until those tests exist and have run on more than one
 architecture, the reproducibility of a cited number is an intention.
 
 Nothing in this repository refuses a violation of any of this.
-`PROSE, NOT ENFORCEMENT`. There is no source tree, no module file and no
-toolchain pin here today, so a pull request adding a Python script, a second
-toolchain or a numerical dependency passes every check this repository runs.
-The commands quoted above read a Go installation that happens to be on one
-machine; they read nothing in this tree. What would make the language decision
-enforceable is the build entry point on #14 and the checks on #16, #17, #18 and
-#65, and none of them exists yet.
+`PROSE, NOT ENFORCEMENT`, and the reason has changed since this was written
+while the mark has not. The source tree, the module file and the toolchain pin
+now exist, and so do the build entry point and the four checks this paragraph
+named as absent, so the run reads this tree rather than a Go installation that
+happens to be on one machine:
+
+    git ls-files go.mod .github/workflows/build-and-test.yml       .github/workflows/format-and-lint.yml .github/workflows/codeql.yml       .github/workflows/no-network-imports.yml
+    .github/workflows/build-and-test.yml
+    .github/workflows/codeql.yml
+    .github/workflows/format-and-lint.yml
+    .github/workflows/no-network-imports.yml
+    go.mod
+ What
+those checks refuse is a tree that does not build, does not test, is not
+formatted, carries a network-capable import outside the permitted package, or
+carries a finding from the static analysis. None of them refuses a SECOND
+language: a pull request adding a Python script or a numerical dependency
+passes every one of them, because nothing reads this record and compares it
+against what the tree is made of. That is the half that is still prose, and it
+is the half this record is about.
 
 ## Date
 

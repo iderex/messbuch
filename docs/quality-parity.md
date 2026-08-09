@@ -95,7 +95,7 @@ is adopted as it stands and carries one line wherever this board deviates.
 | The test suite | `dotnet.yml`, in the `build` job: `dotnet test --no-build --verbosity normal` | Adopted, and in place | In place, the harness landed by #15 and the check that runs it by #16 | |
 | A coverage bar on the surface that decides refusals, failing closed on an unreadable or empty report | `dotnet.yml`, the `Enforce the security-surface coverage bar` step, which runs `scripts/check-coverage.py` over a Cobertura report | Adapted | #50 | There the surface is the code that authorises a login; here it is the validator's refusal paths and the estimators, because the equivalent of letting the wrong person in is admitting a wrong number or computing one |
 | A formatter check that reports rather than applies | `prettier.yml`, job id `prettier` with no `name:` | Adopted, with the repair command in the same code path | In place, landed by #17 as `.github/workflows/format-and-lint.yml` | The check and the fix are one function here rather than two tools that agree until they do not, so `go run . fmt` writes exactly what the check demands. The prose half is trailing whitespace and a final newline rather than a prose formatter, because a Markdown formatter would add a runtime this tree does not carry, and the line-ending question is settled in `.gitattributes` rather than in a formatter setting |
-| Static analysis of the source, reporting into the code scanning tab | `codeql.yml`, contexts `CodeQL` and `Analyze (csharp)` | Adopted | #18 | |
+| Static analysis of the source, reporting into the code scanning tab | `codeql.yml`, contexts `CodeQL` and `Analyze (csharp)` | Adapted, and in place | In place, landed by #18 as `.github/workflows/codeql.yml`, context `Analyze (go)` | Two deviations, both forced by what this tool reads. The threat model is local rather than the default remote, because this tool opens no socket and under the remote model no source reaches any sink here, so the analysis would have been green by construction. And the analysis is limited to the source: this analyser also reads the workflow files and zizmor already gates that subject under its own name |
 | Dependency review of newly introduced and upgraded dependencies | `dependency-review.yml`, job id `dependency-review` with no `name:` | Adopted, and already in place | In place, `.github/workflows/dependency-review.yml` | |
 | The Trojan Source unicode guard | `unicode-guard.yml`, `Reject Trojan Source Unicode` | Adopted, and already in place | In place, `.github/workflows/unicode-guard.yml` | |
 | The workflow audit | `zizmor.yml`, `Audit workflows (zizmor)` | Adopted, and already in place | In place, `.github/workflows/zizmor.yml` | |
@@ -162,6 +162,7 @@ In place today, all reporting on every pull request:
 
     git ls-files .github/workflows/
     .github/workflows/build-and-test.yml
+    .github/workflows/codeql.yml
     .github/workflows/dco.yml
     .github/workflows/dependency-review.yml
     .github/workflows/format-and-lint.yml
@@ -171,12 +172,12 @@ In place today, all reporting on every pull request:
     .github/workflows/unicode-guard.yml
     .github/workflows/zizmor.yml
 
-Run on the branch that lands the build and test check. Before it, that list is
-the same without `build-and-test.yml`.
+Run on the branch that lands the static analysis. Before it, that list is the
+same without `codeql.yml`.
 
-That is the build and test check, the sign off check, dependency review, the
-formatter check, the pull request hygiene check, the unicode guard, the
-workflow audit and the invariants leg. `scorecard.yml` is not a gate leg and
+That is the build and test check, the static analysis, the sign off check,
+dependency review, the formatter check, the pull request hygiene check, the
+unicode guard, the workflow audit and the invariants leg. `scorecard.yml` is not a gate leg and
 `docs/required-checks.md` says why it must never be required.
 
 Not in place as a check on a pull request, and no longer waiting on the source
@@ -185,13 +186,16 @@ tree or the dependency manifest they read, because both now exist:
     git ls-files | grep -cE '\.go$|go\.mod|go\.sum'
     11
 
-The coverage bar, the static analysis and the format compatibility check are
-what is left in that state. The first to land was the toolchain pin and the
+The coverage bar and the format compatibility check are what is left in that
+state. The first to land was the toolchain pin and the
 single command, #14, and the rest wrap or read what it creates. The locked
 restore, the build with warnings as errors and the test suite came off this
 list with #16, which runs the whole of that command on every pull request, so
 each of the three is now a leg the board refuses a change over rather than one
-a contributor runs.
+a contributor runs. The static analysis came off it with #18, which is not a
+leg of that command: it needs a database built by an analyser the tree does not
+carry, so it lives in a workflow of its own and a contributor does not run it
+locally.
 
 How each of the three that came off the list is spelled here. The locked
 restore is the command's `modules` leg, which runs `go mod verify` against
