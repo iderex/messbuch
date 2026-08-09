@@ -1,0 +1,11 @@
+# NOT A RECORD. This file exists on a branch that is never merged, so that the
+# check named Validate the corpus can be watched going red on the platform
+# rather than assumed to. Nothing here is transcribed from any publication and
+# the quantity does not exist.
+#
+# It carries one defect: blinding is misspelled, which is the mistake this leg
+# exists to refuse rather than silently drop.
+
+schema_version = 1
+status = "active"
+blindng = "not-stated"
