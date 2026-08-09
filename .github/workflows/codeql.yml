@@ -23,6 +23,16 @@
 # defect gets a dismissal with a written reason beside it, so a later reader can
 # tell an accepted risk from an unread one.
 #
+# THE THREAT MODEL IS THE SETTING THIS CHECK LIVES OR DIES ON, and the default
+# is wrong here. Out of the box the analyser treats only remote input as
+# untrusted. This tool opens no socket by construction, so under that default
+# nothing in the tree is reachable from a source and the analysis is green for
+# a reason that has nothing to do with the code being sound. Measured rather
+# than reasoned: a branch carrying a path read straight from the command line
+# and an allocation sized from it produced a SARIF with zero results. Adding
+# the local threat model makes command-line arguments, environment variables
+# and file contents sources, which is the whole of this project's input.
+#
 # Failing on a finding is the gate step at the bottom rather than a property of
 # the analysis step. `analyze` uploads and exits zero whatever it found, so a
 # workflow without that step reports green on a pull request that introduced an
@@ -84,7 +94,10 @@ jobs:
         with:
           languages: ${{ matrix.language }}
           build-mode: autobuild
-          queries: security-extended
+          config: |
+            queries:
+              - uses: security-extended
+            threat-models: local
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81 # v4.37.3
