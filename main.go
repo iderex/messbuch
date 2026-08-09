@@ -49,6 +49,25 @@ func main() {
 			fmt.Fprintf(os.Stderr, "\n%v\n", err)
 			os.Exit(1)
 		}
+	case "fmt":
+		wd, err := os.Getwd()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "cannot read the working directory: %v\n", err)
+			os.Exit(1)
+		}
+		changed, err := gate.Reformat(wd)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "%v\n", err)
+			os.Exit(1)
+		}
+		if len(changed) == 0 {
+			fmt.Println("nothing to change; every file already carries the bytes the gate demands")
+			return
+		}
+		for _, name := range changed {
+			fmt.Println(name)
+		}
+		fmt.Printf("\n%d file(s) rewritten.\n", len(changed))
 	case "help", "-h", "--help":
 		usage(os.Stdout)
 	default:
@@ -63,6 +82,7 @@ func usage(w *os.File) {
 
 	go run . ci         run the local gate
 	go run . ci <leg>   run one leg of it, named by the id the run prints
+	go run . fmt        write the bytes the format-and-lint leg demands
 	go run . help       print this
 
 The gate prints its own legs, in the order it runs them, with what each one

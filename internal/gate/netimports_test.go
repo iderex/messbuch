@@ -12,7 +12,7 @@ func fixture(name string) string { return filepath.Join("testdata", "netimports"
 // file the network-capable import sits in, and the leg has to tell them apart.
 // The accepted half is not decoration: a leg that refused everything would
 // pass the refused half on its own, and this is the near miss that catches it.
-func TestTheImportIsRefusedOutsideNetAndAcceptedInsideIt(t *testing.T) {
+func TestNetImportsRefusedOutsideNetAndAcceptedInsideIt(t *testing.T) {
 	_, err := noNetworkImportsLeg(fixture("refused"))
 	if err == nil {
 		t.Fatal("a package outside internal/net imported net/http and the leg passed it")
@@ -37,7 +37,7 @@ func TestTheImportIsRefusedOutsideNetAndAcceptedInsideIt(t *testing.T) {
 
 // Two hops. A check reading only the direct imports of each package passes
 // this tree, and that is the check somebody writes first.
-func TestAReachTwoHopsAwayIsRefused(t *testing.T) {
+func TestNetImportsReachTwoHopsAwayIsRefused(t *testing.T) {
 	_, err := noNetworkImportsLeg(fixture("transitive"))
 	if err == nil {
 		t.Fatal("a package reaching net/http through one hop was passed")
@@ -50,7 +50,7 @@ func TestAReachTwoHopsAwayIsRefused(t *testing.T) {
 // A test file is source. A graph computed without the test packages passes
 // this tree, and a test is exactly where somebody reaches for a live server
 // because it is "only a test".
-func TestANetworkCapableImportInATestFileIsRefused(t *testing.T) {
+func TestNetImportsInATestFileIsRefused(t *testing.T) {
 	_, err := noNetworkImportsLeg(fixture("test-file"))
 	if err == nil {
 		t.Fatal("a test file imported net/http and the leg passed it")
@@ -64,7 +64,7 @@ func TestANetworkCapableImportInATestFileIsRefused(t *testing.T) {
 // docs/decisions/0009-offline-by-default.md says and is the branch most easily
 // written the other way. A helper reached only from internal/net is not an
 // offender; the leak this check exists for is a package outside that reach.
-func TestAHelperReachedOnlyFromNetIsAccepted(t *testing.T) {
+func TestNetImportsHelperReachedOnlyFromNetIsAccepted(t *testing.T) {
 	examined, err := noNetworkImportsLeg(fixture("net-dependency"))
 	if err != nil {
 		t.Fatalf("a helper reached only from internal/net was refused: %v", err)
@@ -76,7 +76,7 @@ func TestAHelperReachedOnlyFromNetIsAccepted(t *testing.T) {
 
 // Fails closed. A tree with no module is a graph that was never computed, and
 // the leg has to say so rather than report a clean set it never read.
-func TestAGraphThatCannotBeComputedIsARefusal(t *testing.T) {
+func TestNetImportsGraphThatCannotBeComputedIsARefusal(t *testing.T) {
 	if _, err := noNetworkImportsLeg(t.TempDir()); err == nil {
 		t.Fatal("a directory with no module passed")
 	}
@@ -85,7 +85,7 @@ func TestAGraphThatCannotBeComputedIsARefusal(t *testing.T) {
 // The other half of failing closed. A module whose package set comes back
 // empty is indistinguishable in the output from a tree that was never walked,
 // so it is refused rather than read as a tree with nothing to check.
-func TestAModuleWithNoPackagesIsARefusal(t *testing.T) {
+func TestNetImportsModuleWithNoPackagesIsARefusal(t *testing.T) {
 	if _, err := noNetworkImportsLeg(fixture("no-packages")); err == nil {
 		t.Fatal("a module carrying no package passed")
 	}
@@ -94,7 +94,7 @@ func TestAModuleWithNoPackagesIsARefusal(t *testing.T) {
 // The list is data, and data that carries no reason for each entry is a list
 // nobody can review. This is the property that makes adding a name a
 // reviewable line rather than an edit to a matcher.
-func TestEveryNetworkCapablePathCarriesItsReason(t *testing.T) {
+func TestNetImportsEveryPathCarriesItsReason(t *testing.T) {
 	if len(networkCapable) == 0 {
 		t.Fatal("the table is empty, so the leg refuses nothing")
 	}
@@ -119,7 +119,7 @@ func TestEveryNetworkCapablePathCarriesItsReason(t *testing.T) {
 // net/url parses and opens nothing. It is named here because it is what a
 // prefix rule over "net/" would have refused, and a validator reading a source
 // URL out of a record is ordinary work.
-func TestPathsThatOnlyLookNetworkCapableAreNotInTheTable(t *testing.T) {
+func TestNetImportsPathsThatOnlyLookCapableAreNotInTheTable(t *testing.T) {
 	for _, entry := range networkCapable {
 		if entry.Path == "net/url" || entry.Path == "net/mail" {
 			t.Errorf("%q is in the table and it opens nothing", entry.Path)
@@ -129,7 +129,7 @@ func TestPathsThatOnlyLookNetworkCapableAreNotInTheTable(t *testing.T) {
 
 // The tree this repository actually is. A leg that passes only its own
 // fixtures says nothing about the mainline.
-func TestThisRepositoryHasNoNetworkCapableImport(t *testing.T) {
+func TestTheTreeReachesNoNetworkCapableImport(t *testing.T) {
 	examined, err := noNetworkImportsLeg("../..")
 	if err != nil {
 		t.Fatalf("this repository reaches a network-capable API: %v", err)
