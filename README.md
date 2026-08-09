@@ -10,13 +10,22 @@ See [NOTICE.md](NOTICE.md) for the intended-use notice.
 
 ## License
 
-AGPL-3.0, decided by the maintainer on 2026-08-08. It answers entry 1 of
-issue #13 and no other entry in that issue.
+The code is AGPL-3.0, decided by the maintainer on 2026-08-08 and recorded in
+[0016](docs/decisions/0016-repository-license.md).
 
 The full text is in [LICENSE](LICENSE). Read that file rather than this line,
 and if you want the platform's own reading of it, run:
 
     gh api repos/iderex/messbuch --jq '.license.spdx_id'
 
-Whether the corpus under `record/` and `vocabulary/` is to carry terms of its
-own is entry 2 of issue #13, and that entry is not answered here.
+The corpus under `record/` and `vocabulary/` is a separate decision and is
+CC BY 4.0, taken on 2026-08-09 and recorded in
+[0017](docs/decisions/0017-corpus-license.md). What is licensed there is the
+collection rather than any individual measured number, and it covers the
+vocabulary and the transcriptions alike.
+
+No file in this repository carries the CC BY 4.0 text. `LICENSE` is the AGPL-3.0
+text and there is no second license file:
+
+    git ls-files | grep -Ei 'LICENSE'
+    LICENSE

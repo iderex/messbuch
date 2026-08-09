@@ -31,6 +31,11 @@ here leaves the index wrong, and nothing in this repository refuses that.
 | 0013 | [Which pooling model is the default](0013-pooling-default.md) | 2026-08-07 |
 | 0014 | [The deviation statistic and the reference value it needs](0014-deviation-statistic.md) | 2026-08-08 |
 | 0015 | [What counts as a tension, what counts as real, and what the probability is about](0015-what-counts-as-a-tension.md) | 2026-08-08 |
+| 0016 | [The license of this repository](0016-repository-license.md) | 2026-08-08 |
+| 0017 | [The license of the corpus, which is not the license of the code](0017-corpus-license.md) | 2026-08-09 |
+| 0018 | [Whether a corpus release gets an archived identifier, and under what name](0018-archived-identifier.md) | 2026-08-09 |
+| 0019 | [Whether contributions from outside are accepted before the first release](0019-outside-contributions-before-first-release.md) | 2026-08-09 |
+| 0020 | [The public contact point for security and for conduct](0020-public-contact-point.md) | 2026-08-09 |
 
 ## Numbers reserved and not yet used
 
@@ -102,3 +107,9 @@ paragraph is the only thing that says so.
 Questions only the maintainer can answer are collected on issue #13 and are not
 decided in these records. When one is answered the answer becomes a record and
 appears in the table above.
+
+Five of them have been answered and are `0016` through `0020`. Which record
+answers which entry is listed on #13 rather than here, so that the mapping has
+one home. One entry of that issue is open and has no record: the domain of the
+conduct address, which `0020-public-contact-point.md` names in its own section
+on what it does not decide.
