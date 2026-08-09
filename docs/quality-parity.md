@@ -105,7 +105,7 @@ is adopted as it stands and carries one line wherever this board deviates.
 | An application binary interface floor build, so the artifact stays loadable inside the oldest supported host | `dotnet.yml`, `ABI floor build` | Not applicable, with an equivalent | #61 | There is no host application to stay loadable inside; the equivalent breakage here is a schema change that makes an existing corpus unreadable, so the parity leg is a format compatibility check rather than a build |
 | A package build of the shipped artifact | `dotnet.yml`, `Package (JPRM)`, calling `build.yml`, context `Package (JPRM) / Build package` | Adapted | #56 | A release here is a data artifact as well as a binary, so the package step has two outputs rather than one |
 | An inventory of what shipped, generated at release time | `build.yml`, `Generate SBOM`, context `Package (JPRM) / Generate SBOM` | Adapted | #53 for the inventory, #56 for publishing it with the release | The inventory has to cover the corpus artifact as well as the binary's dependencies, since a corpus release with no statement of which series and which revisions it holds is an opaque blob |
-| An end to end harness against a live external service | `e2e-login.yml`, which carries a `pull_request` trigger with a `paths:` filter and is required by nothing | Not applicable in the gate, with an equivalent outside it | #11 fixes where it goes, #15 builds the harness | The equivalent is the network integration harness `docs/decisions/0010-headless-tests.md` names as `test/online/`, which stays outside the gate for the same reason that one is not required there: a leg that depends on somebody else's service reds on their outage |
+| An end to end harness against a live external service | `e2e-login.yml`, which carries a `pull_request` trigger with a `paths:` filter and is required by nothing | Not applicable in the gate, with an equivalent outside it | In place, landed by #15 as `test/online/`, with #11 holding the record that fixes where it goes | The equivalent is the network integration harness `docs/decisions/0010-headless-tests.md` names as `test/online/`, which stays outside the gate for the same reason that one is not required there: a leg that depends on somebody else's service reds on their outage |
 | A translation catalog guard | Nowhere. See the section below | Not applicable | Nothing lands it | This board is English only, and the leg is also not in the target gate to be adopted from |
 
 ## The leg that is not there
@@ -150,9 +150,13 @@ does not find two issues the map never mentions and conclude the map is stale.
 ## Which legs are not yet in place
 
 Plainly, and this is the important section. Of the seventeen legs in the map,
-seven are in place on this board and one needs nothing built at all. The other
-nine name work this board still owes, and six of the nine were waiting on a
+eight are in place on this board and one needs nothing built at all. The other
+eight name work this board still owes, and six of the eight were waiting on a
 source tree to build against, which now exists.
+
+Seven of the eight in place are checks reporting on a pull request. The eighth
+is the network integration harness, which is in place by never being a check at
+all, and is listed separately below for that reason.
 
 In place today, all reporting on every pull request:
 
@@ -206,9 +210,15 @@ this document:
 
 Not in place, and blocked on something other than the source tree: the package
 build and the release inventory, which need a release to be published at all, and
-which sit on the release milestone behind #56. That is eight of the nine. The
-ninth is the network integration harness, which is owed by #15 and is the one
-piece of parity work here that is deliberately never a gate leg.
+which sit on the release milestone behind #56. With the six above them, that is
+the whole of what is owed.
+
+The network integration harness is no longer among them. `test/online/` exists,
+it carries the build constraint that keeps it out of every ordinary run, it
+reports the number of tests it ran even when that number is zero, and the gate
+names it as not run on every run rather than passing over it in silence. It is
+the one piece of parity work here that is deliberately never a gate leg, so
+"in place" for it means exactly that and nothing about a pull request.
 
 Two of the legs already in place reported on a subject that did not exist, and
 that is not the same as reporting clean. `dependency-review` was one of them,

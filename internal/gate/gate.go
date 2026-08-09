@@ -109,6 +109,10 @@ func indented(w io.Writer, block string) {
 		return
 	}
 	for _, line := range strings.Split(block, "\n") {
+		if line == "" {
+			fmt.Fprintln(w)
+			continue
+		}
 		fmt.Fprintf(w, "         %-18s %s\n", "", line)
 	}
 }

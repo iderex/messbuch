@@ -34,6 +34,13 @@ func Legs() []Leg {
 			ID:      "test",
 			Subject: "every package's tests pass",
 			Run:     testLeg,
+			Limits:  limitsOfTheTestLeg,
+		},
+		{
+			ID:      "headless-tests",
+			Subject: "no test reaches a display, elevation, the network or a path outside this tree",
+			Run:     headlessLeg,
+			Limits:  limitsOfHeadless,
 		},
 		{
 			ID:      "corpus-decodes",

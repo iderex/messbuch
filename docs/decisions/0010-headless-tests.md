@@ -147,14 +147,34 @@ the build constraint alone. The constraint keeps the harness out of the build.
 It does not tell a reader that a harness exists, and a gate that is silent
 about it is the runtime-skip option again with a longer path.
 
-THE GATE'S CONFIGURATION DOES NOT EXIST TODAY AND THIS RECORD DOES NOT CREATE
-IT. There is no build entry point, no test harness and no build or test
-workflow in this repository, so no configuration here excludes anything. The
-single command that is the local gate is owed by #14, the harness itself and
-the headless rule's enforcement by #15, and the build and test check by #16.
-Until those land, the paragraphs above describe what those issues have to
-produce and not a property of anything that runs. This paragraph is the whole
-disclosure and nothing later in this record softens it.
+The gate's configuration exists and shows it. #14 landed the single local gate
+command and #15 landed the harness and the headless rule's enforcement. The
+test leg of that command carries the exclusion as text, naming this harness,
+its build constraint and the invocation above, and the run prints it beside the
+test result on every run:
+
+    go run . ci
+    ok       test               3 package(s) tested
+                                test/online is excluded from this leg and was not run. Its files carry the build
+                                constraint "online", so none of them is compiled into an ordinary run, and what it
+                                tests needs the outside world. It is invoked deliberately and reports the
+                                number of tests it ran, zero included:
+
+                                    go test -tags online ./test/online/...
+
+The headless rule itself is a leg of the same command rather than a sentence
+here. It reads the test source and refuses a test that imports a
+network-capable path, names a display variable, names a privileged tool, or
+names a path outside this repository, and the refusal names the test and what
+it reached for. What it cannot see is printed beside its result.
+
+WHAT IS STILL NOT TRUE. Nothing runs that command on a pull request as a build
+and test check; #16 owes that, and until it lands the gate is something a
+contributor runs rather than something this board refuses a change over. Two
+other checks do run one leg each on every pull request, and neither is this
+one. And no run of this suite has been made on a machine that has no display
+and no network: what is enforced is that no test reads for one, which is a
+property of the source rather than a measurement of an environment.
 
 ## Reasons
 
