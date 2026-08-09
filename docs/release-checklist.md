@@ -74,7 +74,7 @@ required.
 Answerable now.
 
     git ls-tree --name-only origin/main docs/decisions/ | wc -l
-    15
+    22
 
 That count includes the index and the template, so it is a starting point rather
 than an answer. `docs/decisions/README.md` is the index and carries both the
@@ -82,6 +82,16 @@ record table and the reserved-number table, and a reserved number with no record
 behind it is the thing to look for. The question to ask against it is not how
 many records exist but whether anything the release behaves according to is
 decided in a pull request body instead of in a record.
+
+Five of those records are the maintainer's answers to #13, `0016` through
+`0020`, and until they landed those five decisions lived only in comments on
+that issue. That is the shape this item is looking for, and it is worth naming
+because it went undetected for a day: a decision the release depends on can sit
+somewhere that is neither a record nor a pull request body.
+
+One entry of #13 is still open and it does not block a release. It is the domain
+of the address a conduct complaint goes to, which is why there is no code of
+conduct in the tree.
 
 ### 4. The corpus validates, and its record count is stated
 
@@ -156,9 +166,29 @@ use, fork or package anything here, and the sign-off check on every pull request
 asked contributors to certify that they may submit their work under a license
 that did not exist. Both of those end with the file.
 
-The license on the corpus is a different question and is still open. It is entry
-2 of #13, and the archived identifier question there also touches what a release
-publishes, so this item being answered does not release the two below it.
+The license on the corpus is a different question and it is now answered too.
+CC BY 4.0 over the collection, entry 2 of #13, recorded in
+`docs/decisions/0017-corpus-license.md`. What is not done is the file: no text of
+that license is in the tree, and the only license file here is the AGPL-3.0 one
+above.
+
+    git ls-files | grep -Ei 'LICENSE'
+    LICENSE
+
+So this item is answered for the code and answered only in prose for the corpus,
+and a release that ships the corpus with no terms a redistributor can copy is
+shipping a license nobody can read off the artifact.
+
+The archived identifier question is answered as well and it adds work to the
+release rather than removing it. `docs/decisions/0018-archived-identifier.md`
+puts a persistent identifier and a `CITATION.cff` on every release, deposited
+under the maintainer's own name. Neither exists:
+
+    git ls-files | grep -Ei 'CITATION'
+    (no output, exit 1)
+
+An author identifier to go with the name is named there as owed. None of the
+three is a question any longer, so none of them belongs back on #13.
 
 ### 10. The inventory is published
 
