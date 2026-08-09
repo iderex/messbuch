@@ -93,7 +93,7 @@ is adopted as it stands and carries one line wherever this board deviates.
 | Locked dependency restore, where a resolution differing from the committed pins fails rather than resolving quietly | `dotnet.yml`, in the `build` job: `dotnet restore --locked-mode` | Adopted | #14 for the lockfile and the restore, #53 for the pinning rule across dependencies and actions | |
 | Build with warnings as errors | `dotnet.yml`, in the `build` job: `dotnet build --no-restore --warnaserror` | Adapted, and in place | In place, landed by #16 as `.github/workflows/build-and-test.yml`, running the single command #14 created | The Go compiler refuses rather than warns, so there is no flag with this spelling. What stands in for it is `go vet`, inside the command's format-and-lint leg, and #16 added nothing further: a stricter analyser reachable only from a workflow would refuse on a pull request what no local run refuses |
 | The test suite | `dotnet.yml`, in the `build` job: `dotnet test --no-build --verbosity normal` | Adopted, and in place | In place, the harness landed by #15 and the check that runs it by #16 | |
-| A coverage bar on the surface that decides refusals, failing closed on an unreadable or empty report | `dotnet.yml`, the `Enforce the security-surface coverage bar` step, which runs `scripts/check-coverage.py` over a Cobertura report | Adapted | #50 | There the surface is the code that authorises a login; here it is the validator's refusal paths and the estimators, because the equivalent of letting the wrong person in is admitting a wrong number or computing one |
+| A coverage bar on the surface that decides refusals, failing closed on an unreadable or empty report | `dotnet.yml`, the `Enforce the security-surface coverage bar` step, which runs `scripts/check-coverage.py` over a Cobertura report | Adapted, and in place | In place, landed by #50 as the `coverage-floor` leg of the single command | There the surface is the code that authorises a login; here it is the validator's refusal paths and the estimators, because the equivalent of letting the wrong person in is admitting a wrong number or computing one. The estimators are not on the surface because no package here produces a number yet, which `coverage-floor.toml` says of itself. The bar is a leg of the one command rather than a workflow of its own, so a contributor meets it locally and `Build and test` carries it on a pull request |
 | A formatter check that reports rather than applies | `prettier.yml`, job id `prettier` with no `name:` | Adopted, with the repair command in the same code path | In place, landed by #17 as `.github/workflows/format-and-lint.yml` | The check and the fix are one function here rather than two tools that agree until they do not, so `go run . fmt` writes exactly what the check demands. The prose half is trailing whitespace and a final newline rather than a prose formatter, because a Markdown formatter would add a runtime this tree does not carry, and the line-ending question is settled in `.gitattributes` rather than in a formatter setting |
 | Static analysis of the source, reporting into the code scanning tab | `codeql.yml`, contexts `CodeQL` and `Analyze (csharp)` | Adapted, and in place | In place, landed by #18 as `.github/workflows/codeql.yml`, context `Analyze (go)` | Two deviations, both forced by what this tool reads. The threat model is local rather than the default remote, because this tool opens no socket and under the remote model no source reaches any sink here, so the analysis would have been green by construction. And the analysis is limited to the source: this analyser also reads the workflow files and zizmor already gates that subject under its own name |
 | Dependency review of newly introduced and upgraded dependencies | `dependency-review.yml`, job id `dependency-review` with no `name:` | Adopted, and already in place | In place, `.github/workflows/dependency-review.yml` | |
@@ -150,8 +150,8 @@ does not find two issues the map never mentions and conclude the map is stale.
 ## Which legs are not yet in place
 
 Plainly, and this is the important section. Of the seventeen legs in the map,
-eight are in place on this board and one needs nothing built at all. The other
-eight name work this board still owes, and six of the eight were waiting on a
+nine are in place on this board and one needs nothing built at all. The other
+seven name work this board still owes, and five of the seven were waiting on a
 source tree to build against, which now exists.
 
 Seven of the eight in place are checks reporting on a pull request. The eighth
@@ -196,8 +196,10 @@ tree or the dependency manifest they read, because both now exist:
     git ls-files | grep -cE '\.go$|go\.mod|go\.sum'
     46
 
-The coverage bar and the format compatibility check are what is left in that
-state. The number above was 11 when this section was written and nothing moved
+The format compatibility check is what is left in that state. The coverage bar
+came off this list with #50, which is a leg of the single command rather than a
+workflow of its own, so it adds no check name and no row to
+`docs/required-checks.md`. The number above was 11 when this section was written and nothing moved
 it while three landings added source, which is the shape of drift a pasted count
 has: it stays plausible. Re-run it rather than reading it. The first to land was the toolchain pin and the
 single command, #14, and the rest wrap or read what it creates. The locked

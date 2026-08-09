@@ -66,6 +66,12 @@ func Legs() []Leg {
 			Limits:  limitsOfRefusalSites,
 		},
 		{
+			ID:      "coverage-floor",
+			Subject: "how much of the surface that decides refusals is executed at all",
+			Run:     coverageFloorLeg,
+			Limits:  limitsOfCoverageFloor,
+		},
+		{
 			ID:      "no-network-imports",
 			Subject: "no package outside internal/net reaches a network-capable API",
 			Run:     noNetworkImportsLeg,
