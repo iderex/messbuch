@@ -1,0 +1,56 @@
+# The coverage floor, and the surface it is measured over.
+#
+# A coverage percentage over a whole repository is a number that goes up while
+# the things that matter stay untested. This file puts the bar where being
+# wrong is worst instead, and the gate reads it rather than restating any of it:
+#
+#     go run . ci coverage-floor
+
+threshold = 85.0
+
+reason = """
+Eighty-five, and the number is argued rather than read off the current value.
+
+What it is a bar on: the packages that decide whether a record is refused. A
+defect there admits a wrong number into a corpus assembled to study wrong
+numbers, or refuses a correct transcription and sends a contributor away, and
+neither shows up as a crash.
+
+Why not a hundred. A floor of a hundred makes every untestable line a
+negotiation, and the negotiation ends with somebody deleting a branch to get
+green rather than writing a fixture. The refusal sites themselves already carry
+a stricter obligation than any percentage: every one of them has to be executed
+by a fixture, which the refusal-sites leg refuses, and that is per site rather
+than per statement. This floor covers what is left, which is the reading and the
+plumbing around those sites.
+
+Why not seventy. Below that, a package can lose an entire error path and stay
+green, and the error paths here are the ones that fail closed. What the leg
+measured on the day this landed:
+
+    go run . ci coverage-floor
+    ok       coverage-floor     89.9% of 473 statement(s) over internal/schema, internal/validate, against a floor of 85.0% in coverage-floor.toml
+
+So the floor leaves room for a change to cost a few statements and none for a
+suite to be quietly gutted.
+
+Moving this number is a change to this file with its own reason, and lowering it
+to make a red run green is the move it exists to make visible.
+"""
+
+# The surface, as package paths relative to the repository root.
+#
+# The list is deliberate and the gate refuses two ways of getting it wrong: an
+# entry naming no package in this tree, and a package holding a refusal site
+# that is not listed here. The second is the drift that matters, because a
+# boundary a person maintains by hand goes stale the first time somebody adds a
+# refuser somewhere new.
+#
+# What is not here yet: the estimators. Nothing in this tree produces a number
+# anybody could cite, so there is no such package to name. When one lands it
+# belongs in this list, and nothing in the gate can ask for it, because a
+# package that does not exist cannot be found missing.
+surface = [
+  "internal/schema",
+  "internal/validate",
+]

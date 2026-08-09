@@ -98,7 +98,13 @@ not accounted for until that package is named too.`
 // validator can produce, and counting one would let the suite discharge an
 // obligation by writing the answer down.
 func refusalSitesIn(root string) ([]refusalSite, error) {
-	dir := filepath.Join(root, filepath.FromSlash(refusalSurface))
+	return refusalSitesInDir(filepath.Join(root, filepath.FromSlash(refusalSurface)), root)
+}
+
+// refusalSitesInDir is the same reading over one directory, so that the
+// coverage floor can ask the same question of every package under internal/
+// without a second parser that agrees until it does not.
+func refusalSitesInDir(dir, root string) ([]refusalSite, error) {
 	fset := token.NewFileSet()
 	pkgs, err := parser.ParseDir(fset, dir, func(info os.FileInfo) bool {
 		return !strings.HasSuffix(info.Name(), "_test.go")
