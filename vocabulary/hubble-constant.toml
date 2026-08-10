@@ -1,0 +1,111 @@
+# Vocabulary entry. The shape of this file is fixed by
+# docs/decisions/0006-quantity-identity.md and the canonical unit is chosen by
+# the rule in docs/decisions/0007-units.md.
+#
+# This is not a measurement record and it holds no measured value. It is this
+# project's own statement of what a name means. Records for this quantity live
+# under record/hubble-constant/ and there are none yet; the series is #35.
+
+id = "hubble-constant"
+name = "Hubble constant"
+
+# A rate, so the dimension is the reciprocal of a time and the coherent SI unit
+# for it is the reciprocal second. It is written `s^-1` rather than `Hz`,
+# because the SI reserves the hertz for periodic phenomena and an expansion rate
+# is not one, so the two are the same arithmetic and not the same unit.
+#
+# That dimension is not one of the twelve the table in docs/decisions/0007-units.md
+# lists. The table there is the rule applied to the dimensions the seed corpus
+# needs and 0007 says the rule answers for a dimension the corpus has not met
+# yet, while docs/decisions/0006-quantity-identity.md asks for one of the
+# dimensions 0007 names. The two sentences disagree here, and this file follows
+# the rule.
+dimension = "inverse time"
+canonical_unit = "s^-1"
+status = "active"
+
+definition = """
+The rate at which the universe expands at the present epoch: the constant of
+proportionality between the recession speed of a distant source and its
+distance, taken at redshift zero. It is the value now of a quantity that changes
+over cosmic time, so a published number is a measurement of this quantity only
+where the source reports it for the present epoch, whatever epoch the
+observations behind it come from.
+"""
+
+# Boundary cases that are this quantity. Each was decided rather than assumed,
+# and the list grows by one entry every time a case is argued.
+includes = [
+  "A value obtained by calibrating a distance indicator against a nearer one and comparing distance against redshift, whatever the rungs of the ladder are and whatever calibrates the first of them.",
+  "A value obtained by fitting a cosmological model to observations at another epoch and reporting the present-day rate that fit implies. The model the extraction assumed is a fact about the extraction rather than about the quantity, so it is carried on the record and not in the identifier, which is the reasoning docs/decisions/0006-quantity-identity.md applies to the proton charge radius.",
+  "A value published in kilometres per second per megaparsec, which is a unit and not a different quantity. It is stored in the unit the source printed and the conversion to the canonical unit is stored on the record under docs/decisions/0007-units.md.",
+  "A value the source produced by combining its own measurement with others, which enters carrying statement_kind = \"combined-fit\" under docs/decisions/0008-provenance.md and is never pooled as an independent measurement.",
+]
+
+# Boundary cases that are not this quantity. Each says what it is instead,
+# because an exclusion that only says no leaves a contributor with a number and
+# nowhere to put it.
+excludes = [
+  "The expansion rate at a redshift other than zero. It is the same function of cosmic time at a different argument, the two differ for a reason that is not measurement error, and it is therefore its own identifier if the corpus ever needs one.",
+  "The dimensionless number this constant becomes when it is divided by a round value of the same kind, which much of the literature writes as a lower-case h. It carries no dimension, and docs/decisions/0006-quantity-identity.md puts the boundary of the convention rule at the dimension, so it is a separate identifier rather than an alias and a value published only in that form needs that entry before it can be filed.",
+  "The Hubble time and the Hubble length, which are the reciprocal of this quantity and that reciprocal multiplied by the speed of light. Both carry different dimensions and are separate identifiers.",
+  "The deceleration parameter and any other coefficient of the expansion history beyond the first. Each is a different quantity rather than a convention of this one.",
+]
+
+aliases = [
+  "Hubble parameter at the present epoch",
+  "Hubble-Lemaitre constant",
+  "present-day expansion rate",
+  "H0",
+]
+
+# The codebook the method field of a record is coded against. There is no
+# catch-all value: a technique this set does not have arrives as an addition to
+# this file in the same pull request as the record that needs it.
+#
+# These entries are written from what a measurement of this quantity has to do
+# and not from a survey of the published series. No paper was read on the route
+# that produced this file, so the set is what the definition above requires
+# rather than a claim about which techniques the literature actually used, and
+# the series that transcribes the papers is where it gains what is missing. No
+# `family` is written on any entry, because no cross-quantity technique family
+# has been argued.
+[[techniques]]
+id = "distance-ladder"
+name = "Distance ladder"
+definition = "A distance indicator is calibrated against a nearer one whose distance is known by a more direct route, and the rate follows from the distances and redshifts of objects the calibrated indicator reaches."
+
+[[techniques]]
+id = "early-universe-model-fit"
+name = "Early universe model fit"
+definition = "A cosmological model is fitted to observations of the early universe and the present-day rate the fitted model implies is reported."
+
+[[techniques]]
+id = "lens-time-delay"
+name = "Gravitational lens time delay"
+definition = "The delay between images of a variable source seen through a foreground lens is measured, and the rate follows from the delay together with a model of the lensing mass."
+
+[[techniques]]
+id = "standard-siren"
+name = "Standard siren"
+definition = "The distance to a gravitational-wave source is read from the waveform itself and combined with a redshift obtained by another route."
+
+# One regime, and this is the field #35 asks this entry to be careful with.
+#
+# What moved across the published history of this quantity is the calibration of
+# the distance scale, not the definition of what is being measured: a value
+# published against a superseded calibration is a measurement of this same
+# quantity that rests on an assumption later found to be wrong. That is a fact
+# about the extraction and it is carried on the record, where an analysis can
+# read it, rather than by this field, which would instead forbid pooling across
+# the boundary under docs/decisions/0007-units.md and would put every early
+# value out of reach of the very comparison the corpus exists to make.
+[[definition_epochs]]
+id = "present-epoch-expansion-rate"
+note = "The definition of this quantity has not changed. Changes of distance-scale calibration are not changes of definition and are recorded on the record rather than here."
+
+# Empty because no external identifier has been recorded, not because none
+# exists. Nothing on the route that produced this entry verified an identifier
+# in any external scheme, and writing an unverified one here would put a
+# fabricated cross-reference in the file whose job is to say what a name means.
+external = []
