@@ -1,0 +1,98 @@
+# Vocabulary entry. The shape of this file is fixed by
+# docs/decisions/0006-quantity-identity.md and the canonical unit is chosen by
+# the rule in docs/decisions/0007-units.md.
+#
+# This is not a measurement record and it holds no measured value. It is this
+# project's own statement of what a name means. Records for this quantity live
+# under record/muon-anomalous-magnetic-moment/ and there are none yet; the
+# series is #36.
+
+id = "muon-anomalous-magnetic-moment"
+name = "Muon anomalous magnetic moment"
+
+# Dimensionless, and dimensionless from the definition of the quantity itself
+# rather than from a division by another measured quantity. Under
+# docs/decisions/0007-units.md that fixes what a record here carries in
+# measurement.denominator_quantity: the literal `definitional` and never the
+# identifier of another quantity. A record naming a denominator quantity here is
+# recording something else.
+dimension = "dimensionless"
+canonical_unit = "1"
+status = "active"
+
+definition = """
+The fractional amount by which the magnetic moment of the muon departs from the
+value a structureless spin one-half particle of the same charge and mass would
+have. Written as a number it is half of the amount by which the muon's g factor
+exceeds two. It is a property of the muon, so a published number is a
+measurement of this quantity only where what was measured is the moment of the
+muon itself rather than the moment of a bound or composite system that contains
+one.
+"""
+
+# Boundary cases that are this quantity. Each was decided rather than assumed,
+# and the list grows by one entry every time a case is argued.
+includes = [
+  "A value published as the g factor of the muon rather than as the anomaly. The two cannot differ for a reason that is not measurement error, they share this entry's dimension, and the relation between them subtracts and divides by exact numbers, so the g factor is a convention rather than a name and is stored as published with the conversion on the record under docs/decisions/0007-units.md.",
+  "A value read from the difference between the spin precession frequency and the cyclotron frequency of muons in a magnetic field, however that field was calibrated.",
+  "A value the source produced by combining its own measurement with others, which enters carrying statement_kind = \"combined-fit\" under docs/decisions/0008-provenance.md and is never pooled as an independent measurement.",
+]
+
+# Boundary cases that are not this quantity. Each says what it is instead,
+# because an exclusion that only says no leaves a contributor with a number and
+# nowhere to put it.
+#
+# One boundary is deliberately in neither list. Whether a value measured on the
+# antimuon is a value of this quantity turns on whether the two can differ for a
+# reason that is not measurement error, which is the rule in
+# docs/decisions/0006-quantity-identity.md and is a question about physics
+# rather than about this file. Nothing on the route that produced this entry
+# settled it, so it is left open rather than decided quietly here, and the
+# series that meets the first such value is where it gets argued.
+excludes = [
+  "The anomalous magnetic moment of the electron or of the tau. Each is a property of a different particle and the three can differ for a reason that is not measurement error, so each is its own identifier under docs/decisions/0006-quantity-identity.md.",
+  "The magnetic moment of the muon itself. It carries the dimension of a magnetic moment rather than none, so it is a separate identifier under the dimension boundary in docs/decisions/0006-quantity-identity.md.",
+  "The ratio of the muon's magnetic moment to the proton's. It is dimensionless but its denominator is another measured quantity rather than the definition of this one, and reaching the anomaly from it needs further measured quantities rather than a convention, so it is a separate identifier.",
+  "A value of this quantity computed from theory rather than measured. That is a prediction, this corpus holds published measurements, and it has no home here today. Whether predictions are admitted at all, and under what marking, is the question #36 carries and it is not answered by this file.",
+]
+
+aliases = [
+  "muon anomaly",
+  "muon g-2",
+  "anomalous magnetic dipole moment of the muon",
+  "a_mu",
+]
+
+# The codebook the method field of a record is coded against. There is no
+# catch-all value: a technique this set does not have arrives as an addition to
+# this file in the same pull request as the record that needs it.
+#
+# These entries are written from what a measurement of this quantity has to do
+# and not from a survey of the published series. No paper was read on the route
+# that produced this file, so the set is what the definition above requires
+# rather than a claim about which techniques the literature actually used, and
+# the series that transcribes the papers is where it gains what is missing. No
+# `family` is written on either entry, because no cross-quantity technique
+# family has been argued.
+[[techniques]]
+id = "storage-ring-precession"
+name = "Storage ring precession"
+definition = "Polarised muons circulate in a magnetic storage ring and the anomaly is read from the frequency at which the spin direction advances relative to the momentum direction."
+
+[[techniques]]
+id = "stopped-muon-precession"
+name = "Stopped muon precession"
+definition = "Polarised muons are brought to rest in a known magnetic field and the anomaly is read from the precession frequency of the spin against a separately measured field."
+
+# One regime. The definition above is a statement about the muon and about a
+# number that is exactly two, and neither has moved, so the initial regime omits
+# `from` rather than carrying an invented start date.
+[[definition_epochs]]
+id = "departure-from-the-dirac-value"
+note = "The definition of this quantity has not changed. This entry exists so that the regime is written rather than implied by the absence of the field."
+
+# Empty because no external identifier has been recorded, not because none
+# exists. Nothing on the route that produced this entry verified an identifier
+# in any external scheme, and writing an unverified one here would put a
+# fabricated cross-reference in the file whose job is to say what a name means.
+external = []

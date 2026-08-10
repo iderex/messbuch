@@ -1,0 +1,112 @@
+# Vocabulary entry. The shape of this file is fixed by
+# docs/decisions/0006-quantity-identity.md and the canonical unit is chosen by
+# the rule in docs/decisions/0007-units.md.
+#
+# This is not a measurement record and it holds no measured value. It is this
+# project's own statement of what a name means. Records for this quantity live
+# under record/newtonian-constant-of-gravitation/ and there are none yet; the
+# series is #34.
+
+id = "newtonian-constant-of-gravitation"
+name = "Newtonian constant of gravitation"
+
+# docs/decisions/0007-units.md gives the canonical unit as the coherent SI unit
+# for the dimension, written without a prefix. Rearranging the law below for the
+# constant gives force times length squared over mass squared, which in coherent
+# SI units is m^3 kg^-1 s^-2, and the dimension is the same statement without
+# the units. That dimension is not one of the twelve the table in 0007 lists.
+# The table there is the rule applied to the dimensions the seed corpus needs
+# and 0007 says the rule answers for a dimension the corpus has not met yet,
+# while docs/decisions/0006-quantity-identity.md asks for one of the dimensions
+# 0007 names. The two sentences disagree the first time a compound dimension is
+# written, which is here, and this file follows the rule.
+dimension = "length^3 mass^-1 time^-2"
+canonical_unit = "m^3 kg^-1 s^-2"
+status = "active"
+
+definition = """
+The constant of proportionality in Newton's law of universal gravitation: the
+attractive force between two point masses is this constant times the product of
+the masses, divided by the square of the distance between them. It is a
+property of gravitation rather than of any body, of any place or of any
+apparatus, so a published number is a measurement of this quantity only where
+the masses and the separation that produced the measured force were established
+independently of gravitation itself.
+"""
+
+# Boundary cases that are this quantity. Each was decided rather than assumed,
+# and the list grows by one entry every time a case is argued.
+includes = [
+  "A value obtained by measuring the attraction between laboratory masses of known mass and separation, whatever the instrument that senses it.",
+  "A value obtained from the attraction of a mass whose own mass was established by weighing rather than by an orbit, since the mass is then known independently of gravitation.",
+  "A value the source produced by combining its own measurement with others, which enters carrying statement_kind = \"combined-fit\" under docs/decisions/0008-provenance.md and is never pooled as an independent measurement.",
+]
+
+# Boundary cases that are not this quantity. Each says what it is instead,
+# because an exclusion that only says no leaves a contributor with a number and
+# nowhere to put it.
+excludes = [
+  "The standard gravitational parameter of a body, the product of this constant with that body's mass. It is what an orbit determines, it carries the dimension length^3 time^-2, and it is a property of the body, so it is a separate identifier under the dimension boundary in docs/decisions/0006-quantity-identity.md.",
+  "The local acceleration of free fall. It carries the dimension of an acceleration and is a property of a place on a body rather than of gravitation, so it is a separate identifier.",
+  "The constant that appears in the field equations of general relativity, which is this constant multiplied by a pure number and divided by the fourth power of the speed of light. It carries a different dimension and is therefore a separate identifier rather than a convention of this one.",
+  "A value inferred from a cosmological or astrophysical model rather than measured. That is a prediction, this corpus holds published measurements, and it has no home here today.",
+]
+
+aliases = [
+  "gravitational constant",
+  "universal gravitational constant",
+  "Newtonian gravitational constant",
+  "Newton's constant",
+  "big G",
+]
+
+# The codebook the method field of a record is coded against. There is no
+# catch-all value: a technique this set does not have arrives as an addition to
+# this file in the same pull request as the record that needs it.
+#
+# These entries are written from what a measurement of this quantity has to do
+# and not from a survey of the published series. No paper was read on the route
+# that produced this file, so the set is what the definition above requires
+# rather than a claim about which techniques the literature actually used, and
+# the series that transcribes the papers is where it gains what is missing. No
+# `family` is written on any entry, because no cross-quantity technique family
+# has been argued.
+[[techniques]]
+id = "torsion-balance-deflection"
+name = "Torsion balance, static deflection"
+definition = "Source masses are placed near a torsion balance and the constant is read from the steady angular deflection and the restoring torque of the suspension."
+
+[[techniques]]
+id = "torsion-balance-time-of-swing"
+name = "Torsion balance, time of swing"
+definition = "Source masses are moved between two positions and the constant is read from the change in the oscillation period of the balance rather than from a deflection."
+
+[[techniques]]
+id = "torsion-balance-compensation"
+name = "Torsion balance, compensated"
+definition = "A feedback loop holds the balance at a fixed angle or a fixed angular acceleration and the constant is read from the compensating torque, so the elastic behaviour of the suspension does not enter the result."
+
+[[techniques]]
+id = "beam-balance"
+name = "Beam balance"
+definition = "The apparent weight of a test mass is weighed with a large source mass in two positions and the constant is read from the difference."
+
+[[techniques]]
+id = "atom-interferometry"
+name = "Atom interferometry"
+definition = "The phase of a matter-wave interferometer is measured with a source mass in two positions and the constant is read from the difference, with free atoms rather than a suspended body as the test mass."
+
+# One regime. The constant is defined by the law it appears in and that law has
+# not been restated, so the initial regime omits `from` rather than carrying an
+# invented start date. Redefinitions of the SI base units changed how the
+# canonical unit is realised and not what the quantity is, and
+# docs/decisions/0007-units.md is where that distinction is handled.
+[[definition_epochs]]
+id = "newtons-law-of-universal-gravitation"
+note = "The definition of this quantity has not changed. This entry exists so that the regime is written rather than implied by the absence of the field."
+
+# Empty because no external identifier has been recorded, not because none
+# exists. Nothing on the route that produced this entry verified an identifier
+# in any external scheme, and writing an unverified one here would put a
+# fabricated cross-reference in the file whose job is to say what a name means.
+external = []
