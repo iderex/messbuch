@@ -80,7 +80,11 @@ page = "1"
 // rather than something every other fixture also earns.
 const fixturePath = "record/example-quantity/1900-example-01.toml"
 
-func load(t *testing.T) *schema.Set {
+// load reads this repository's own schema. It takes testing.TB rather than
+// *testing.T because the fuzz targets load the same set from a *testing.F, and
+// two loaders would be two answers to which schema the suite validates
+// against.
+func load(t testing.TB) *schema.Set {
 	t.Helper()
 	set, err := schema.Load("../..")
 	if err != nil {
