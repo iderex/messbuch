@@ -67,7 +67,8 @@ drifts against the vocabulary that actually assigns them. The vocabulary entry
 for a quantity is the authority for that quantity's dimension and canonical
 unit; this record is the authority for how that unit is chosen.
 
-Applying the rule to the dimensions the seed corpus needs:
+The rule applied to some dimensions, as worked examples and never as the set a
+vocabulary entry may choose from:
 
 | Dimension | Canonical unit |
 | --- | --- |
@@ -90,6 +91,39 @@ is not the canonical unit here. It is what the published value is stored in,
 which is where it belongs. Choosing a canonical unit per discipline would put
 the corpus's comparability at the mercy of which discipline a record came from,
 which is the one thing a cross-disciplinary corpus cannot afford.
+
+### How a compound dimension and a compound unit are written
+
+Every row of the table above is one word, and a quantity whose dimension is not
+one word is where the shape of the answer has to be fixed rather than left to
+whoever writes the first entry. Two quantities of the seed corpus are in that
+position already, so this is a case the corpus has met rather than one it might.
+
+A dimension is written as the base dimensions it is made of, in the order
+length, mass, time, electric current, thermodynamic temperature, amount of
+substance, luminous intensity, each followed by a caret and its exponent where
+that exponent is not one, separated by single spaces. A base dimension the
+quantity does not carry is left out rather than written with exponent zero. A
+quantity with no base dimension in it is written `dimensionless`, which is the
+one dimension not spelled this way and is spelled that way because
+`schema/record-1.toml` compares against that literal to decide whether a record
+owes a denominator.
+
+A canonical unit is written the same way, in the SI symbols, in the order of the
+dimensions they carry, each followed by a caret and its exponent where that is
+not one, separated by single spaces. `1` is the canonical unit of a
+dimensionless quantity and is the one canonical unit that is not a symbol.
+
+So the Newtonian constant of gravitation carries `length^3 mass^-1 time^-2` and
+`m^3 kg^-1 s^-2`, and the Hubble constant carries `time^-1` and `s^-1`. The
+second of those is written `s^-1` rather than `Hz` although the arithmetic is
+the same, because the SI reserves the hertz for periodic phenomena and an
+expansion rate is not one.
+
+This is a spelling rather than a second authority. Which dimension a quantity
+has is still the vocabulary entry's, and a rule for writing it down exists so
+that two entries for the same dimension cannot disagree in their bytes, which is
+what a check would otherwise have to compare through.
 
 ### The published value and the normalized value
 
