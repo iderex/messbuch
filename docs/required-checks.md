@@ -156,6 +156,7 @@ checked.
 | Matching string | Workflow file | Why not |
 | --- | --- | --- |
 | `Scorecard analysis` | `.github/workflows/scorecard.yml` | No `pull_request` trigger, and the job is guarded to the default branch. It can never report on a pull request, so requiring it blocks every merge permanently. |
+| `Fuzz FuzzRecord`, `Fuzz FuzzRecordValues`, `Fuzz FuzzRecordPath` | `.github/workflows/fuzz.yml` | Three names from one matrix job, and none of them can report on a pull request: the workflow triggers on a schedule and on manual dispatch and on nothing else, so requiring any of them blocks every merge permanently. That is the first reason and it is the mechanical one. The second is the reason the trigger is written that way: each target fuzzes for ten minutes, and a merge that waits half an hour on a search with no end condition is a check people learn to route around. |
 | `zizmor` | `.github/workflows/zizmor.yml` | This is the code-scanning check run from the SARIF upload, not the job that fails on findings. It is absent on fork and Dependabot pull requests. Require `Audit workflows (zizmor)` instead. See the measurement below. |
 | `CodeQL` | `.github/workflows/codeql.yml` | The same shape one file over. This is the code-scanning check run from the SARIF upload, not the job that fails on findings, and the upload step is conditioned to same-repository non-Dependabot pull requests, so no such check run exists on a fork or Dependabot pull request. Require `Analyze (go)` instead. |
 

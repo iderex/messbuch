@@ -9,15 +9,28 @@ Every action every workflow uses is pinned to a forty-character commit, with the
 tag it corresponded to in a trailing comment rather than in the reference:
 
     grep -rh 'uses:' .github/workflows/ | grep -v 'security-extended' | wc -l
-    23
+    29
 
     grep -rh 'uses:' .github/workflows/ | grep -v 'security-extended' \
       | grep -c '@[0-9a-f]\{40\} #'
-    23
+    29
 
-Twenty-three uses, twenty-three pins. The one line the first filter removes is
+Twenty-nine uses, twenty-nine pins. The one line the first filter removes is
 `- uses: security-extended`, which names a CodeQL query pack inside the CodeQL
 configuration and is not an action reference.
+
+The number here read twenty-three until the fuzz workflow landed, and only four
+of the six it moved by are that workflow's. Running the first command against
+the tree without it prints twenty-five, so two uses had already arrived under
+other landings while this file went on saying twenty-three. That is what a
+pasted count does rather than a fault of any one change, and it is the reason
+the commands sit above the number instead of underneath it.
+
+One action appears in two workflows and both carry the same commit.
+`actions/upload-artifact` is pinned at `v7.0.1` in `.github/workflows/scorecard.yml`
+and at the same commit in `.github/workflows/fuzz.yml`, which is deliberate: two
+revisions of one action in one tree is the same supply-chain surface twice and a
+state nobody can read off a single line.
 
 The Go side has one dependency and it is pinned by `go.mod` with its hash in
 `go.sum`:
@@ -144,7 +157,7 @@ happened.
 `no dependency update tool configurations found`. Correct. There is no
 Dependabot or equivalent configuration in the tree.
 
-The tree has one Go dependency and twenty-three action pins, all of which are
+The tree has one Go dependency and twenty-nine action pins, all of which are
 already visible in a diff when they move, and the dependency-review check reads
 manifest changes on every pull request. An update tool's value grows with the
 size of the tree and this one is small.

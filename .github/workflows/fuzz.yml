@@ -1,0 +1,164 @@
+# Coverage guided fuzzing of the record parser (#52).
+#
+# The subject is untrusted input. A record arrives as a file in a pull request
+# from a person nobody has met, and the analysis reads a corpus a user may have
+# assembled anywhere, so a crafted file is the ordinary case rather than the
+# exotic one. What the targets assert, and why the schema is loaded from the
+# tree rather than fuzzed, is written where the targets are, in
+# internal/validate/fuzz_test.go, and is not repeated here.
+#
+# This is not a gate leg and must never become one. A fuzz run's length is not
+# a thing a merge should wait on, and a check that adds a quarter of an hour to
+# every push is a check people learn to route around. There is no
+# pull_request trigger, so it cannot be required by accident, and
+# docs/required-checks.md lists its name under what must not be required.
+#
+# When it last ran is a question this file cannot answer and the runs page can:
+#
+#     gh run list --repo iderex/messbuch --workflow fuzz.yml --limit 10
+#
+# Ask it rather than assuming. A scheduled workflow that has not run is
+# indistinguishable from one that ran clean if nobody looks, and GitHub
+# disables a schedule after a stretch of repository inactivity without failing
+# anything, which is the same silence with a different cause. Every run writes
+# what it did into its own summary, so an empty runs page is the only shape a
+# reader has to interpret.
+#
+# The corpus of interesting inputs is kept between runs. Discarding it restarts
+# the search every time and throws away most of the value, at a cost that is
+# invisible because the job still reports green. It is the fuzzer's corpus and
+# nothing else: no module cache is restored here, so what this job builds is
+# still decided by go.sum rather than by a previous run.
+name: Fuzz the record parser
+
+on:
+  schedule:
+    # Weekly. Long enough that the corpus grows between runs, often enough that
+    # a defect introduced on a Monday is not found in the spring.
+    - cron: "41 4 * * 2"
+  workflow_dispatch:
+
+# Explicit deny-all at workflow level; the job grants only what it needs.
+permissions: {}
+
+# Cancel a superseded run on the same ref. This job audits and publishes
+# nothing, so there is no half-finished release for a cancellation to leave
+# behind. The corpus cache is written at the end of a run, so a cancelled run
+# loses the inputs it found and costs nothing else.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fuzz:
+    name: Fuzz ${{ matrix.target }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read # checkout the tree the targets live in
+    strategy:
+      # One target crashing must not hide what the other two would have found.
+      fail-fast: false
+      matrix:
+        target:
+          - FuzzRecord
+          - FuzzRecordValues
+          - FuzzRecordPath
+    env:
+      TARGET: ${{ matrix.target }}
+      PACKAGE: ./internal/validate/
+      FUZZTIME: 10m
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # No step pushes, so do not leave the token in .git/config.
+          persist-credentials: false
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          # The pin in go.mod and nothing else, for the reason
+          # build-and-test.yml gives: a version written here would be a second
+          # pin and the two would disagree the day one moves.
+          go-version-file: go.mod
+
+      - name: Where the corpus lives
+        id: where
+        run: echo "dir=$(go env GOCACHE)/fuzz" >> "$GITHUB_OUTPUT"
+
+      # The key carries the run id so every run writes a new entry, and the
+      # restore key takes the most recent one, which is how a cache is used as
+      # an accumulator rather than as a hit-or-miss lookup. What is cached is
+      # generated input to a fuzz target and never code: nothing in this
+      # directory is compiled, linked or executed.
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        id: corpus
+        with:
+          path: ${{ steps.where.outputs.dir }}
+          key: fuzz-corpus-${{ matrix.target }}-${{ github.run_id }}
+          restore-keys: |
+            fuzz-corpus-${{ matrix.target }}-
+
+      - name: Fuzz
+        id: run
+        # Not `set -e` on the fuzz command itself. A crash has to reach the
+        # artifact upload below before this job ends, or the one run that found
+        # something is the one run that kept nothing.
+        run: |
+          set -uo pipefail
+          echo "Fuzzing ${TARGET} in ${PACKAGE} for ${FUZZTIME}."
+          go test "${PACKAGE}" -run '^$' -fuzz "^${TARGET}\$" -fuzztime="${FUZZTIME}"
+          status=$?
+          echo "status=${status}" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Say what this run examined
+        # Runs whether the fuzzing passed or failed, because a run that found
+        # something has the most to say and is the one most likely to end early.
+        if: always()
+        env:
+          CACHE_HIT: ${{ steps.corpus.outputs.cache-matched-key }}
+          STATUS: ${{ steps.run.outputs.status }}
+          CORPUS_DIR: ${{ steps.where.outputs.dir }}
+        run: |
+          set -uo pipefail
+          crashers="$(find internal/validate/testdata/fuzz -type f 2>/dev/null | wc -l)"
+          kept="$(find "${CORPUS_DIR}" -type f 2>/dev/null | wc -l)"
+          {
+            echo "## ${TARGET}"
+            echo
+            echo "- Fuzzed for \`${FUZZTIME}\`, exit status \`${STATUS:-unknown}\`."
+            echo "- Corpus restored from: \`${CACHE_HIT:-nothing; this run started from the seeds in the source}\`."
+            echo "- Interesting inputs held after this run: ${kept}."
+            echo "- Crashing inputs written by this run: ${crashers}."
+            echo
+            echo "A crashing input is attached to this run as an artifact. Turning one"
+            echo "into a fixture is written down in \`internal/validate/fuzz_test.go\`,"
+            echo "under the heading about going from a crash to a fixture."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Keep what this run found
+        if: always()
+        # The same pin scorecard.yml already carries. One action, one pin: two
+        # revisions of one action in one tree is a supply-chain surface twice
+        # and a count nobody can read off a single line.
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: fuzz-${{ matrix.target }}-${{ github.run_id }}
+          path: |
+            internal/validate/testdata/fuzz
+            ${{ steps.where.outputs.dir }}
+          if-no-files-found: warn
+          retention-days: 90
+
+      - name: Fail if the fuzzing did
+        if: always()
+        env:
+          STATUS: ${{ steps.run.outputs.status }}
+        run: |
+          set -uo pipefail
+          if [ "${STATUS:-1}" != "0" ]; then
+            echo "::error::${TARGET} failed. The crashing input is in this run's artifact; internal/validate/fuzz_test.go says what to do with it."
+            exit 1
+          fi
+          echo "${TARGET} found nothing in ${FUZZTIME}."

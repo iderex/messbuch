@@ -140,8 +140,26 @@ red. #51 carries this board's version, over the validator and the estimators. Th
 default it inherits is that the score is reported and not enforced.
 
 Fuzzing. `fuzz.yml` runs on a schedule and on manual dispatch, and not on a pull
-request. #52 carries this board's version, over the record parser. The same
-inheritance applies: a fuzz run's length is not a thing a merge should wait on.
+request. #52 carries this board's version, over the record parser, and it is in
+place: `.github/workflows/fuzz.yml` here has the same trigger shape for the same
+inherited reason, that a fuzz run's length is not a thing a merge should wait on.
+The targets are in `internal/validate/fuzz_test.go`.
+
+Two things about this board's version are not inherited and are worth reading
+before it is changed. The targets assert properties rather than waiting for a
+panic, because the defects this validator can ship are quieter than a crash: two
+runs over one input agreeing, every refusal naming a catalogue site and saying
+what was found and what was expected, and acceptance implying that the file
+decoded and named a schema version this tree carries. And one of the three
+targets splices fuzzed values into a legal record instead of mutating a whole
+file, because a whole-file mutator spends its budget on bytes that do not decode
+and leaves the parsing underneath the decoder out of reach. That was measured
+rather than supposed, and the measurement is in the pull request that landed it.
+
+When it last ran is not a thing this document can say, and is a thing the runs
+page can:
+
+    gh run list --repo iderex/messbuch --workflow fuzz.yml --limit 10
 
 Neither is a deviation from the gate, because neither is in the gate. They are
 recorded so that a reader comparing this milestone's issue list against this map
@@ -158,7 +176,7 @@ Seven of the eight in place are checks reporting on a pull request. The eighth
 is the network integration harness, which is in place by never being a check at
 all, and is listed separately below for that reason.
 
-In place today, all reporting on every pull request:
+In place today:
 
     git ls-files .github/workflows/
     .github/workflows/build-and-test.yml
@@ -166,6 +184,7 @@ In place today, all reporting on every pull request:
     .github/workflows/dco.yml
     .github/workflows/dependency-review.yml
     .github/workflows/format-and-lint.yml
+    .github/workflows/fuzz.yml
     .github/workflows/no-network-imports.yml
     .github/workflows/pr-hygiene.yml
     .github/workflows/scorecard.yml
@@ -173,8 +192,13 @@ In place today, all reporting on every pull request:
     .github/workflows/validate-corpus.yml
     .github/workflows/zizmor.yml
 
-Run on the branch that lands the structural half of the corpus validator.
-Before it, that list is the same without `validate-corpus.yml`.
+Run on the branch that lands the fuzz targets. Before it, that list is the same
+without `fuzz.yml`, and before the branch that landed the structural half of the
+corpus validator it was also without `validate-corpus.yml`.
+
+Two of those files report on no pull request at all and this heading used to
+claim they all did. `scorecard.yml` never did, and `fuzz.yml` is deliberately
+outside the gate in the section further down. The rest report on every one.
 
 That is the build and test check, the static analysis, the sign off check,
 dependency review, the formatter check, the pull request hygiene check, the
