@@ -107,10 +107,16 @@ whose contents are supposed to be other people's facts.
 - `name`. The quantity's usual name in running prose, capitalised as a person
   would write it.
 - `definition`. Prose, and the field the whole record is about. See below.
-- `dimension`. One of the dimensions `docs/decisions/0007-units.md` names.
+- `dimension`. The dimension of the quantity, spelled as
+  `docs/decisions/0007-units.md` fixes. There is no set to choose from: that
+  record gives a rule for the canonical unit rather than a list of dimensions,
+  and a compound dimension is as admissible as a one-word one. This sentence
+  named a set until #104, and two of the first entries written under it carried
+  a dimension no such set held.
 - `canonical_unit`. The coherent SI unit for that dimension, per the same
   record. The entry is the authority for this quantity's dimension and canonical
-  unit and that record is the authority for how the unit is chosen.
+  unit and that record is the authority for how the unit is chosen and how both
+  are written down.
 - `includes`. A list of boundary cases that are this quantity, each a short
   sentence.
 - `excludes`. A list of boundary cases that are not, each a short sentence and

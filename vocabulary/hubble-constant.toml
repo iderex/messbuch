@@ -10,17 +10,10 @@ id = "hubble-constant"
 name = "Hubble constant"
 
 # A rate, so the dimension is the reciprocal of a time and the coherent SI unit
-# for it is the reciprocal second. It is written `s^-1` rather than `Hz`,
-# because the SI reserves the hertz for periodic phenomena and an expansion rate
-# is not one, so the two are the same arithmetic and not the same unit.
-#
-# That dimension is not one of the twelve the table in docs/decisions/0007-units.md
-# lists. The table there is the rule applied to the dimensions the seed corpus
-# needs and 0007 says the rule answers for a dimension the corpus has not met
-# yet, while docs/decisions/0006-quantity-identity.md asks for one of the
-# dimensions 0007 names. The two sentences disagree here, and this file follows
-# the rule.
-dimension = "inverse time"
+# for it is the reciprocal second. Both are spelled as docs/decisions/0007-units.md
+# fixes, which is also where the reason the unit is written `s^-1` rather than
+# `Hz` is written down.
+dimension = "time^-1"
 canonical_unit = "s^-1"
 status = "active"
 

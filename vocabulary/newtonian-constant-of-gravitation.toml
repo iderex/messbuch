@@ -14,12 +14,7 @@ name = "Newtonian constant of gravitation"
 # for the dimension, written without a prefix. Rearranging the law below for the
 # constant gives force times length squared over mass squared, which in coherent
 # SI units is m^3 kg^-1 s^-2, and the dimension is the same statement without
-# the units. That dimension is not one of the twelve the table in 0007 lists.
-# The table there is the rule applied to the dimensions the seed corpus needs
-# and 0007 says the rule answers for a dimension the corpus has not met yet,
-# while docs/decisions/0006-quantity-identity.md asks for one of the dimensions
-# 0007 names. The two sentences disagree the first time a compound dimension is
-# written, which is here, and this file follows the rule.
+# the units. Both are spelled as that record fixes.
 dimension = "length^3 mass^-1 time^-2"
 canonical_unit = "m^3 kg^-1 s^-2"
 status = "active"
