@@ -78,6 +78,12 @@ func Legs() []Leg {
 			Limits:  limitsOfCoverageFloor,
 		},
 		{
+			ID:      "changelog",
+			Subject: "every release tag has an entry, and no entry runs ahead of a tag",
+			Run:     changelogLeg,
+			Limits:  limitsOfChangelog,
+		},
+		{
 			ID:      "artifact-untracked",
 			Subject: "no output of the corpus build is committed",
 			Run:     artifactUntrackedLeg,

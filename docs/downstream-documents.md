@@ -42,6 +42,7 @@ touched.
 | The implementation language, the pinned toolchain version, or the path of the package permitted to reach the network | `docs/decisions/0002-language-and-toolchain.md`, and `docs/decisions/0009-offline-by-default.md`, which names that package and leaves its path to the language record |
 | The name of the harness that needs the outside world, or what the gate says about it | `docs/decisions/0010-headless-tests.md` and `docs/decisions/0002-language-and-toolchain.md`, which rests its plotting argument on the same rule |
 | Which package may reach the network, or the name of the check that refuses the rest | `docs/decisions/0009-offline-by-default.md`, which fixes both, and `README.md` and `NOTICE.md` once the personal-data statements land under #58 |
+| A release tag, a version number, or whether the tool and the corpus release together | `CHANGELOG.md`, which carries one stream per release line and whose entries the `changelog` leg compares against the tags in both directions, and `docs/release-checklist.md`, whose changelog item is settled by that leg. A corrected record is the entry that matters most, so `docs/corrections.md` and `docs/decisions/0012-where-correction-history-lives.md` are upstream of what such an entry has to say |
 | A stamp field, the corpus version rule, or what a release is | `docs/decisions/0011-corpus-versioning.md` and `docs/decisions/0012-where-correction-history-lives.md`, which states the version consequence of a correction |
 | A format the corpus build writes, which of them is the authority, where the build writes them, or whether its output is tracked | `docs/decisions/0011-corpus-versioning.md`, whose stamp fields every format has to carry and whose reproduction path reads them back, `docs/release-checklist.md`, whose reproducibility item is a claim about these bytes and whose inventory item is about what a release publishes, and `.gitignore`, which names the directory the build writes into. The lossy format's own dropped list is derived from the schema rather than written down, so a field added there moves the format without moving a document |
 | The shape of a `[[correction]]` entry or the `kind` set | `docs/decisions/0012-where-correction-history-lives.md`, `docs/corrections.md`, and the wording in `.github/ISSUE_TEMPLATE/wrong-number.yml` about what happens to a report |
@@ -85,8 +86,7 @@ The command line surface. Its help output, the quickstart and the operator
 documentation are all downstream of it, and the quickstart is the one that fails
 hardest, because it is followed literally on a clean machine.
 
-The changelog. It is downstream of the corpus version rule and of the correction
-`kind` set.
+The changelog now has a row above and is no longer owed here.
 
 The measured shape of the deviation distribution. `README.md` opens by saying
 what the deviations between experiments turn out to look like and what that
