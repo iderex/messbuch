@@ -16,6 +16,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/iderex/messbuch/internal/build"
 	"github.com/iderex/messbuch/internal/gate"
 	"github.com/iderex/messbuch/internal/schema"
 )
@@ -89,6 +90,45 @@ func main() {
 			fmt.Fprintf(os.Stderr, "%v\n", err)
 			os.Exit(1)
 		}
+	case "build":
+		// The corpus as one thing a consumer can load, produced from the
+		// tracked records every time rather than kept beside them. What it
+		// writes is untracked, and the gate's artifact-untracked leg refuses a
+		// build output that was committed; internal/build is where that choice
+		// is argued.
+		wd, err := os.Getwd()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "cannot read the working directory: %v\n", err)
+			os.Exit(1)
+		}
+		set, err := schema.Load(wd)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "%v\n", err)
+			os.Exit(1)
+		}
+		prov, err := build.GitProvenance(wd)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "%v\n", err)
+			os.Exit(1)
+		}
+		artifact, err := build.Build(wd, set, prov)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "%v\n", err)
+			os.Exit(1)
+		}
+		written, err := build.WriteAll(wd, artifact, set.Any())
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "%v\n", err)
+			os.Exit(1)
+		}
+		for _, name := range written {
+			fmt.Println(name)
+		}
+		fmt.Printf("\n%d record(s) at revision %s, corpus version %s, tree %s.\n",
+			artifact.Stamp.SelectedCount, artifact.Stamp.CorpusRevision,
+			artifact.Stamp.CorpusVersion, artifact.Stamp.CorpusState)
+		fmt.Printf("%s is the authority. %s drops %d field(s) and names them in its own header.\n",
+			build.JSONName, build.CSVName, len(build.Dropped(set.Any())))
 	case "refusals":
 		// The list lives in the code that produces it and is printed rather
 		// than written down, because a list of refusals in a document drifts
@@ -113,6 +153,7 @@ func usage(w *os.File) {
 	go run . ci <leg>   run one leg of it, named by the id the run prints
 	go run . fmt        write the bytes the format-and-lint leg demands
 	go run . schema     print the record schema as sentences
+	go run . build      write the corpus artifact under build/
 	go run . refusals   print every refusal the corpus validator can produce
 	go run . help       print this
 

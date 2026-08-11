@@ -1,0 +1,3 @@
+# The corpus artifact is produced by `go run . build` and is not committed.
+# internal/build says why, and the gate refuses a build output that is tracked.
+/build/
