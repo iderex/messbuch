@@ -1,0 +1,9 @@
+# FROZEN. A record written against a schema version this tree carries no file
+# for, which is the direction the issue behind this fixture calls the dangerous
+# one: an old tool meeting a new corpus has to fail loudly rather than read it
+# as best it can. The refusal it earns is committed beside it in readings.json.
+#
+# INVENTED. Nothing here is transcribed from any publication.
+
+schema_version = 2
+status = "active"

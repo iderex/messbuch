@@ -60,6 +60,12 @@ func Legs() []Leg {
 			Limits:  limitsOfValidateCorpus,
 		},
 		{
+			ID:      "schema-compatibility",
+			Subject: "every frozen corpus still reads as it did when it was frozen",
+			Run:     schemaCompatibilityLeg,
+			Limits:  limitsOfSchemaCompatibility,
+		},
+		{
 			ID:      "refusal-sites",
 			Subject: "every place the validator can refuse is executed by a fixture",
 			Run:     refusalSitesLeg,

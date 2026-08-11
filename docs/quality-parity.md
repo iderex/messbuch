@@ -218,14 +218,17 @@ Not in place as a check on a pull request, and no longer waiting on the source
 tree or the dependency manifest they read, because both now exist:
 
     git ls-files | grep -cE '\.go$|go\.mod|go\.sum'
-    46
+    67
 
-The format compatibility check is what is left in that state. The coverage bar
-came off this list with #50, which is a leg of the single command rather than a
-workflow of its own, so it adds no check name and no row to
-`docs/required-checks.md`. The number above was 11 when this section was written and nothing moved
-it while three landings added source, which is the shape of drift a pasted count
-has: it stays plausible. Re-run it rather than reading it. The first to land was the toolchain pin and the
+Nothing is left in that state. The format compatibility check came off this list
+with #61 and the coverage bar came off it with #50, and both are legs of the
+single command rather than workflows of their own, so neither adds a check name
+and neither adds a row to `docs/required-checks.md`. What the compatibility leg
+compares is a reading rather than a verdict, and where its bound falls is in
+`internal/compat` rather than restated here. The number above was 11 when this
+section was written and nothing moved it while three landings added source, which
+is the shape of drift a pasted count has: it stays plausible. Re-run it rather
+than reading it. The first to land was the toolchain pin and the
 single command, #14, and the rest wrap or read what it creates. The locked
 restore, the build with warnings as errors and the test suite came off this
 list with #16, which runs the whole of that command on every pull request, so
