@@ -1,0 +1,67 @@
+# FROZEN. This file is a fixture of schema version 1 and its reading is
+# committed beside it in readings.json. Do not edit it to make a check pass:
+# what it exists to catch is a change that makes this tree read these bytes
+# differently, and editing the bytes hides exactly that.
+#
+# INVENTED. Nothing here is transcribed from any publication, no quantity,
+# group, technique or identifier named here exists, and none of it may be
+# cited or copied into a record.
+
+schema_version = 1
+status = "active"
+blinding = "not-stated"
+
+[measurement]
+quantity = "example-quantity"
+normalization_status = "normalized"
+definition_epoch = "example-epoch"
+
+[measurement.published]
+value = 1.5
+unit = "example unit"
+uncertainty_status = "reported"
+
+[[measurement.published.uncertainty]]
+component = "statistical"
+plus = 0.1
+minus = 0.1
+coverage = "k=1"
+interval_kind = "frequentist"
+
+[measurement.normalized]
+value = 1.5
+unit = "s"
+
+[[measurement.normalized.uncertainty]]
+component = "statistical"
+plus = 0.1
+minus = 0.1
+coverage = "k=1"
+interval_kind = "frequentist"
+
+[measurement.conversion]
+factor = 1.0
+exact = true
+factor_source = "invented for a fixture, and no such authority exists"
+
+[publication]
+date = "1900"
+data_taken_status = "none-in-source"
+
+[method]
+technique = "example-technique"
+
+[group]
+id = "example-group"
+
+[source]
+statement_kind = "primary-result"
+directness = "primary"
+confirmation = "unconfirmed"
+
+[[source.identifier]]
+scheme = "doi"
+value = "10.0000/invented-for-a-fixture"
+
+[source.locator]
+page = "1"

@@ -1,0 +1,81 @@
+{
+  "accepted.toml": {
+    "fields": {
+      "blinding": "not-stated",
+      "group": {
+        "id": "example-group"
+      },
+      "measurement": {
+        "conversion": {
+          "exact": true,
+          "factor": 1,
+          "factor_source": "invented for a fixture, and no such authority exists"
+        },
+        "definition_epoch": "example-epoch",
+        "normalization_status": "normalized",
+        "normalized": {
+          "uncertainty": [
+            {
+              "component": "statistical",
+              "coverage": "k=1",
+              "interval_kind": "frequentist",
+              "minus": 0.1,
+              "plus": 0.1
+            }
+          ],
+          "unit": "s",
+          "value": 1.5
+        },
+        "published": {
+          "uncertainty": [
+            {
+              "component": "statistical",
+              "coverage": "k=1",
+              "interval_kind": "frequentist",
+              "minus": 0.1,
+              "plus": 0.1
+            }
+          ],
+          "uncertainty_status": "reported",
+          "unit": "example unit",
+          "value": 1.5
+        },
+        "quantity": "example-quantity"
+      },
+      "method": {
+        "technique": "example-technique"
+      },
+      "publication": {
+        "data_taken_status": "none-in-source",
+        "date": "1900"
+      },
+      "schema_version": 1,
+      "source": {
+        "confirmation": "unconfirmed",
+        "directness": "primary",
+        "identifier": [
+          {
+            "scheme": "doi",
+            "value": "10.0000/invented-for-a-fixture"
+          }
+        ],
+        "locator": {
+          "page": "1"
+        },
+        "statement_kind": "primary-result"
+      },
+      "status": "active"
+    }
+  },
+  "later-schema-version.toml": {
+    "refusals": [
+      "schema-version at schema_version"
+    ]
+  },
+  "misspelled-field.toml": {
+    "refusals": [
+      "missing-required-field at blinding",
+      "unknown-field at blindng"
+    ]
+  }
+}

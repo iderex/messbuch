@@ -17,6 +17,7 @@ import (
 	"os"
 
 	"github.com/iderex/messbuch/internal/build"
+	"github.com/iderex/messbuch/internal/compat"
 	"github.com/iderex/messbuch/internal/gate"
 	"github.com/iderex/messbuch/internal/schema"
 )
@@ -129,6 +130,25 @@ func main() {
 			artifact.Stamp.CorpusVersion, artifact.Stamp.CorpusState)
 		fmt.Printf("%s is the authority. %s drops %d field(s) and names them in its own header.\n",
 			build.JSONName, build.CSVName, len(build.Dropped(set.Any())))
+	case "freeze":
+		// How a schema version is frozen, and the only supported way to write
+		// a readings file. Hand-writing one would put a person in the position
+		// of deciding what this tree reads, which is the thing the frozen
+		// reading exists to observe rather than to assert.
+		wd, err := os.Getwd()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "cannot read the working directory: %v\n", err)
+			os.Exit(1)
+		}
+		written, err := compat.FreezeAll(wd)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "%v\n", err)
+			os.Exit(1)
+		}
+		for _, name := range written {
+			fmt.Println(name)
+		}
+		fmt.Printf("\n%d readings file(s) written. What changed in them is the change in interpretation, and it belongs in the pull request body.\n", len(written))
 	case "refusals":
 		// The list lives in the code that produces it and is printed rather
 		// than written down, because a list of refusals in a document drifts
@@ -154,6 +174,7 @@ func usage(w *os.File) {
 	go run . fmt        write the bytes the format-and-lint leg demands
 	go run . schema     print the record schema as sentences
 	go run . build      write the corpus artifact under build/
+	go run . freeze     rewrite the frozen readings of every frozen schema version
 	go run . refusals   print every refusal the corpus validator can produce
 	go run . help       print this
 
