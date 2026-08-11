@@ -218,7 +218,7 @@ Not in place as a check on a pull request, and no longer waiting on the source
 tree or the dependency manifest they read, because both now exist:
 
     git ls-files | grep -cE '\.go$|go\.mod|go\.sum'
-    67
+    69
 
 Nothing is left in that state. The format compatibility check came off this list
 with #61 and the coverage bar came off it with #50, and both are legs of the

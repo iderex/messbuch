@@ -127,8 +127,23 @@ There is no third state where the claim is made because it was made last time.
 
 ### 7. The changelog is complete, including corrected records
 
-Not answerable yet. Owed by #55, which also decides whether the tool and the
-corpus release together or separately.
+Answerable, and the answer is empty rather than missing. `CHANGELOG.md` exists
+and carries a stream for the tool and a stream for the corpus, which release
+separately because `docs/decisions/0011-corpus-versioning.md` already fixes that
+neither implies the other. Both streams hold `Unreleased` and nothing else,
+because nothing has been released:
+
+    git tag
+    (no output)
+
+What settles this item at a release is the leg rather than a reading:
+
+    go run . ci changelog
+
+It refuses a release tag with no entry and an entry naming a version no tag
+exists for. What it cannot judge is whether an entry says anything useful, so
+the paragraph below is for the person walking this list rather than for the
+check.
 
 The corrected records are the entries that matter most. Somebody may have
 published a number computed from a value this release changes, and the changelog
