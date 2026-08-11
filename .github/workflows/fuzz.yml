@@ -91,7 +91,7 @@ jobs:
       # an accumulator rather than as a hit-or-miss lookup. What is cached is
       # generated input to a fuzz target and never code: nothing in this
       # directory is compiled, linked or executed.
-      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      - uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         id: corpus
         with:
           path: ${{ steps.where.outputs.dir }}
@@ -101,11 +101,17 @@ jobs:
 
       - name: Fuzz
         id: run
-        # Not `set -e` on the fuzz command itself. A crash has to reach the
-        # artifact upload below before this job ends, or the one run that found
-        # something is the one run that kept nothing.
+        # `set +e` rather than the runner's default, and it is written rather
+        # than assumed: the shell here is `bash -e {0}`, so errexit arrives
+        # from the shebang and no amount of `set -u` takes it away. Under it
+        # the go line would end this step the moment a target crashed, `status`
+        # would never be written, and the one run worth reading would report
+        # its own outcome as unknown. A crash has to reach the artifact upload
+        # below before this job ends, or the run that found something is the
+        # run that kept nothing.
         run: |
-          set -uo pipefail
+          set +e
+          set -u
           echo "Fuzzing ${TARGET} in ${PACKAGE} for ${FUZZTIME}."
           go test "${PACKAGE}" -run '^$' -fuzz "^${TARGET}\$" -fuzztime="${FUZZTIME}"
           status=$?
@@ -120,8 +126,19 @@ jobs:
           CACHE_HIT: ${{ steps.corpus.outputs.cache-matched-key }}
           STATUS: ${{ steps.run.outputs.status }}
           CORPUS_DIR: ${{ steps.where.outputs.dir }}
+        # This step reports and decides nothing, so it may not end the job. It
+        # did once, on the first live run: the runner's shell is `bash -e {0}`,
+        # the counts below are pipelines through `find`, and the directory
+        # holding crashing inputs does not exist on a run that found none,
+        # which is the ordinary case and the one being counted. With errexit
+        # still on from the shebang the step ended on the first count and every
+        # job reported failure having fuzzed for its full ten minutes and found
+        # nothing. `actions/cache` saves under `post-if: success()`, so the
+        # false red also discarded the corpus the run had just spent ten
+        # minutes building, which is the expensive half of that mistake.
         run: |
-          set -uo pipefail
+          set +e
+          set -u
           crashers="$(find internal/validate/testdata/fuzz -type f 2>/dev/null | wc -l)"
           kept="$(find "${CORPUS_DIR}" -type f 2>/dev/null | wc -l)"
           {
@@ -136,6 +153,21 @@ jobs:
             echo "into a fixture is written down in \`internal/validate/fuzz_test.go\`,"
             echo "under the heading about going from a crash to a fixture."
           } >> "$GITHUB_STEP_SUMMARY"
+          exit 0
+
+      # Restore and save are two steps rather than the one action that does
+      # both, and the reason is what the run that matters most looks like.
+      # `actions/cache` saves under `post-if: success()`, so a job that ends
+      # red keeps nothing, and the job that ends red is the job whose fuzzer
+      # just found something. The corpus that led to a crash is the most
+      # valuable corpus this workflow will ever hold and it was the one
+      # guaranteed to be thrown away. `if: always()` puts it back.
+      - name: Keep the corpus for the next run
+        if: always()
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ${{ steps.where.outputs.dir }}
+          key: fuzz-corpus-${{ matrix.target }}-${{ github.run_id }}
 
       - name: Keep what this run found
         if: always()
