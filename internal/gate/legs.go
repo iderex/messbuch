@@ -72,6 +72,12 @@ func Legs() []Leg {
 			Limits:  limitsOfCoverageFloor,
 		},
 		{
+			ID:      "artifact-untracked",
+			Subject: "no output of the corpus build is committed",
+			Run:     artifactUntrackedLeg,
+			Limits:  limitsOfArtifactUntracked,
+		},
+		{
 			ID:      "no-network-imports",
 			Subject: "no package outside internal/net reaches a network-capable API",
 			Run:     noNetworkImportsLeg,
