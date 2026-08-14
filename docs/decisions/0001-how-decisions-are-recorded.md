@@ -91,6 +91,16 @@ The records live in the repository rather than only on the tracker because the
 tracker is where a thing is argued and the repository is what the thing
 currently is. Both are kept. Neither replaces the other.
 
+A RECORD HERE SPEAKS ABOUT ITSELF BY CONVENTION, AND THAT IS PRESCRIBED RATHER
+THAN ACCIDENTAL. Parts 4 and 7 cannot be written without it: a choice stated so
+that a reader can tell whether a change conforms to it names the decision, and a
+reversal condition says what would make this decision be looked at again. So
+sentences of the form "this record names", "where no condition can be named the
+record says so" are the shape the seven parts force. A survey for machine-written
+prose reads a self-mentioning text as a tell, and in `docs/decisions/` it is the
+house form instead. The tell is real everywhere else in this repository, and this
+paragraph exempts one directory rather than the habit.
+
 Nothing in this repository refuses a record that is missing a part.
 `PROSE, NOT ENFORCEMENT`. There is no validator over `docs/decisions/` today
 and no check on any pull request reads these files, so a record dropping its

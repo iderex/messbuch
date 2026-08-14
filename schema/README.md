@@ -194,7 +194,7 @@ honest way to file one today is
 `normalization_status = "not-convertible-across-redefinition"`, which says
 something that is not true of it.
 
-That is a gap in the decision records rather than in this file, and inventing a
-member to close it here would be this file deciding a question `0005` and `0007`
-have not been asked. It is written down so the first transcriber to meet it
-finds the argument rather than a silent refusal.
+The gap is in the decision records rather than in this file, and a member
+invented here to close it would settle a question `0005` and `0007` have not
+been asked. A transcriber who meets it files it against those two records
+instead of working around it.
