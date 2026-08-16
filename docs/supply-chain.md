@@ -1,7 +1,8 @@
 # The supply chain: what is pinned, what a release will list, and what the audit found
 
-Three things that are separate and get confused. This file holds all three so
-that the state of each can be read rather than inferred from the other two.
+Pinning, the release inventory and the audit are three separate states of the
+supply chain, and they are easy to confuse for each other. All three are below,
+so each can be read on its own without being inferred from the other two.
 
 ## Pinning
 

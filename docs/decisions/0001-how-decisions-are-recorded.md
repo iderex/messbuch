@@ -91,6 +91,17 @@ The records live in the repository rather than only on the tracker because the
 tracker is where a thing is argued and the repository is what the thing
 currently is. Both are kept. Neither replaces the other.
 
+A record in this form refers to itself, and that is a convention of the form
+rather than a slip of voice. Part 7 asks what would reverse THIS decision, part
+4 asks what a change would have to conform to, and neither can be written
+without the record naming itself as the thing being reversed or conformed to. So
+sentences of the shape "this record", "this decision" and "the record says that
+and says why" are expected here and are not a style defect, and a survey of the
+fleet's prose that counts them should count them against this paragraph. The
+convention stops at the seven parts: outside them, a document explaining why it
+exists is the ordinary defect it is everywhere else, and this file carries no
+such sentence.
+
 Nothing in this repository refuses a record that is missing a part.
 `PROSE, NOT ENFORCEMENT`. There is no validator over `docs/decisions/` today
 and no check on any pull request reads these files, so a record dropping its
