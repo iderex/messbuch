@@ -299,9 +299,9 @@ coded field and not a regular expression over notes.
 
 ### Fields proposed and refused
 
-Each of these was on the list and none of them survived the rule. They are
-written down so that the next person to propose one finds the argument rather
-than having it again.
+Each of these was on the list and none of them survived the rule. The argument
+against each one is below, so the next person to propose it can read the
+argument instead of having it again.
 
 The value exactly as printed, as a string, for example the parenthesised-digit
 form. It would let a reader check the transcription's formatting and would
